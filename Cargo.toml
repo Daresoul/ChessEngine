@@ -1,0 +1,10 @@
+[package]
+name = "chess_game"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hex-literal = "0.4.1"
+md-5 = "0.10.5"
+rand = "0.8.5"
+sha1 = "0.10.5"
