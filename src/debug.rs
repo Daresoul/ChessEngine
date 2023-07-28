@@ -10,7 +10,7 @@ mod debug
            if i % 8 == 0 {
                print!("\n");
            }
-           print!("{} ", Board::get_board_state_from_position(&game.board, i as u8));
+           print!("{} ", Board::get_board_state_from_position(&game.board, &(i as u8)));
         }
     }
 }
