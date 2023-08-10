@@ -1,83 +1,84 @@
-mod game;
-mod board;
+pub mod game;
+pub mod board;
 mod piece;
 mod debug;
+pub mod debug_structs;
 /*
- *
- *
- *  MapReduce -> (K, [V]) -> R
- *  Where K = 
- *
- *
+    TODO:
+    Remember to think about castling - Can do a lot with checking on the binary map
+    Remember promotion - Can be done with enum types as seen below:
+    struct move_type {
+        move(u8) // move(square to move to)
+        capture(u8) // maybe a capture type?
+        castle(u8, u8, u8, u8) // castle(king start, king end, rook start, rook end)
+        promotion(u8, Piece) // promotion(square to move to, piece to promote to)
+    }
+
+    How to check for checks if a move happen?
+    Can introduce an option type:
+    Option(u8, u8) - Option(How many pieces are in between, place to move to)
+    Can also be done with Option(u8) as i dont think its worth looking at them if there is more
+    than one piece in between.
+
+    Checkmates should be done in the evaluation and can be done by checking if no valid moves
+    are available.
+
+      _____                 _
+     |  __ \               | |
+     | |__) |___   __ _  __| |_ __ ___   __ _ _ __
+     |  _  // _ \ / _` |/ _` | '_ ` _ \ / _` | '_ \
+     | | \ \ (_) | (_| | (_| | | | | | | (_| | |_) |
+     |_|  \_\___/ \__,_|\__,_|_| |_| |_|\__,_| .__/
+                                             | |
+                                             |_|
+   ___  _                    ___
+  / __|| |_   ___  ___ ___  / __| __ _  _ __   ___
+ | (__ | ' \ / -_)(_-<(_-< | (_ |/ _` || '  \ / -_)
+  \___||_||_|\___|/__//__/  \___|\__,_||_|_|_|\___|
+
+     develop pawns: done
+     develop rook: done
+     develop king: todo
+     develop castling: todo
+     develop en passant: todo
+     develop move: todo
+     develop check (as described above): todo
+     develop simple board evaluation (with checkmate): todo
+     develop rest of simple moves: todo
+
+  ___              _
+ | __| _ _   __ _ (_) _ _   ___
+ | _| | ' \ / _` || || ' \ / -_)
+ |___||_||_|\__, ||_||_||_|\___|
+            |___/
+
+    create lib for engine: todo
+    create binary for sampling the libs, and testing them together: todo
+    develop simple engine to go over all moves: todo
+    develop alpha beta pruning: todo
+    develop transposition tables: todo
+    develop iterative deepening: todo
+
+
  */
 
+
+// cargo test -- --nocapture
+// cargo test -- --nocapture --test-threads=1
 
 // Look into peekable: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.peekable
 
 #[cfg(test)]
-mod tests { 
-
-    use crate::piece::piece::PieceType::{King, Rook, Bishop, Knight, Pawn, Queen}; 
+mod tests {
+    use crate::piece::piece::PieceType::{King, Rook, Bishop, Knight, Pawn, Queen};
     use crate::game::game::{Game};
     use crate::board::board::{Board};
     use crate::piece::piece::Piece;
     use std::time::Instant;
-    use rand::{thread_rng, Rng};
-
-/*
-    #[test]
-    fn test_get_state_early() {
-        let val: u64 = 1 << 0; 
-        let game: Game = Game::new(val);
-        assert_eq!(Board::get_board_state_from_position(&game.board, 0), true);
-        assert_eq!(Board::get_board_state_from_position(&game.board, 1), false);
-    }
-
-    #[test]
-    fn test_get_state_false() {
-        let val: u64 = 1 << 32; 
-        let game: Game = Game::new(val);
-        assert_eq!(Board::get_board_state_from_position(&game.board, 31), false);
-        assert_eq!(Board::get_board_state_from_position(&game.board, 33), false);
-        assert_eq!(Board::get_board_state_from_position(&game.board, 32), true);
-    }
-
-    #[test]
-    fn test_get_state() {
-        let val: u64 = 1 << 63; 
-        let game: Game = Game::new(val);
-
-        assert_eq!(Board::get_board_state_from_position(&game.board, 62), false);
-        assert_eq!(Board::get_board_state_from_position(&game.board, 63), true);
-        assert_eq!(Board::get_board_state_from_position(&game.board, 64), false);
-    }
-
-    #[test]
-    fn create_new_game() {
-        let game: Game = Game::new();
-        assert_eq!(game.board.board_value, 0);
-    }
-
-
-    #[test]
-    fn create_new_board_with_set_value() {
-        let board: Board = Board::set_board_bin(50);
-        assert_eq!(board.board_value, 50);
-    }
-
-    #[test]
-    fn create_new_board() {
-        let board: Board = Board::new();
-        assert_eq!(board.board_value, 0);
-    }
-
-
-    #[test]
-    fn create_new_board_with_set_value_2() {
-        let board: Board = Board::set_board_bin(18_446_462_598_732_906_495);
-        assert_eq!(board.board_value, 18_446_462_598_732_906_495);
-    }
-*/
+    use crate::board::board::MoveType::{FutureMove, Standard};
+    use crate::debug::debug;
+    use crate::debug::debug::debug_board_state_with_moves_marked;
+    use crate::debug_structs::debug_structs;
 
     #[test]
     fn test_board_value_one_piece_start() {
@@ -139,100 +140,15 @@ mod tests {
 
     #[test]
     fn test_board_value_normal_board() {
-        let mut arr : [Option<Piece>; 64] = [
-        Some(Piece { piece_type: Rook, is_white: false}),
-        Some(Piece { piece_type: Knight, is_white: false}),
-        Some(Piece { piece_type: Bishop, is_white: false}),
-        Some(Piece { piece_type: Queen, is_white: false}),
-        Some(Piece { piece_type: King, is_white: false}),
-        Some(Piece { piece_type: Bishop, is_white: false}),
-        Some(Piece { piece_type: Knight, is_white: false}),
-        Some(Piece { piece_type: Rook, is_white: false}),
-
-        Some(Piece { piece_type: Pawn, is_white: false}),
-        Some(Piece { piece_type: Pawn, is_white: false}),
-        Some(Piece { piece_type: Pawn, is_white: false}),
-        Some(Piece { piece_type: Pawn, is_white: false}),
-        Some(Piece { piece_type: Pawn, is_white: false}),
-        Some(Piece { piece_type: Pawn, is_white: false}),
-        Some(Piece { piece_type: Pawn, is_white: false}),
-        Some(Piece { piece_type: Pawn, is_white: false}),
-
-        None, None, None, None, None, None, None, None,
-        None, None, None, None, None, None, None, None,
-        None, None, None, None, None, None, None, None,
-        None, None, None, None, None, None, None, None,
-
-        Some(Piece { piece_type: Pawn, is_white: true}),
-        Some(Piece { piece_type: Pawn, is_white: true}),
-        Some(Piece { piece_type: Pawn, is_white: true}),
-        Some(Piece { piece_type: Pawn, is_white: true}),
-        Some(Piece { piece_type: Pawn, is_white: true}),
-        Some(Piece { piece_type: Pawn, is_white: true}),
-        Some(Piece { piece_type: Pawn, is_white: true}),
-        Some(Piece { piece_type: Pawn, is_white: true}),
-
-        Some(Piece { piece_type: Rook, is_white: true}),
-        Some(Piece { piece_type: Knight, is_white: true}),
-        Some(Piece { piece_type: Bishop, is_white: true}),
-        Some(Piece { piece_type: Queen, is_white: true}),
-        Some(Piece { piece_type: King, is_white: true}),
-        Some(Piece { piece_type: Bishop, is_white: true}),
-        Some(Piece { piece_type: Knight, is_white: true}),
-        Some(Piece { piece_type: Rook, is_white: true}),
-        ];
-
-        let val = Board::get_board_value(arr);
+        let val = Board::get_board_value(debug_structs::get_normal_board());
 
         assert_eq!(val, 18_446_462_598_732_906_495);
     }
 
     #[test]
     fn test_of_new_game_from_state() {
-        let mut arr : [Option<Piece>; 64] = [
-            Some(Piece { piece_type: Rook, is_white: false}),
-            Some(Piece { piece_type: Knight, is_white: false}),
-            Some(Piece { piece_type: Bishop, is_white: false}),
-            Some(Piece { piece_type: Queen, is_white: false}),
-            Some(Piece { piece_type: King, is_white: false}),
-            Some(Piece { piece_type: Bishop, is_white: false}),
-            Some(Piece { piece_type: Knight, is_white: false}),
-            Some(Piece { piece_type: Rook, is_white: false}),
-
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-
-            None, None, None, None, None, None, None, None,
-            None, None, None, None, None, None, None, None,
-            None, None, None, None, None, None, None, None,
-            None, None, None, None, None, None, None, None,
-
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-
-            Some(Piece { piece_type: Rook, is_white: true}),
-            Some(Piece { piece_type: Knight, is_white: true}),
-            Some(Piece { piece_type: Bishop, is_white: true}),
-            Some(Piece { piece_type: Queen, is_white: true}),
-            Some(Piece { piece_type: King, is_white: true}),
-            Some(Piece { piece_type: Bishop, is_white: true}),
-            Some(Piece { piece_type: Knight, is_white: true}),
-            Some(Piece { piece_type: Rook, is_white: true}),
-        ];
-
-        let game = Game::new_from_arr(arr);
+        let arr : [Option<Piece>; 64] = debug_structs::get_normal_board();
+        let game = Game::new_from_arr(arr, true);
 
         assert_eq!(game.board.board_state, arr);
         assert_eq!(game.board.board_value, 18_446_462_598_732_906_495);
@@ -332,37 +248,236 @@ mod tests {
         assert_eq!(Piece::u64_to_piece(&over), None);
     }
 
-    fn generate_boards(boards_amount: u64) -> Vec<Board> {
-        let mut boards: Vec<Board> = vec![];
+    #[test]
+    fn king_move() {
+        let game = Game::new_from_string("8/8/8/3K4/8/8/8/8".to_string(), true);
 
-        for _ in 0..boards_amount {
-            let mut board: [Option<Piece>; 64] = [None; 64];
+        let mut all_moves = game.get_all_moves();
+        let mut x = all_moves[27].take().unwrap();
 
-            let mut rng = thread_rng();
+        let mut expected_moves = vec![
+            Standard(18), Standard(19), Standard(20),
+            Standard(26), Standard(28),
+            Standard(34), Standard(35), Standard(36),
+        ];
 
-            for i in 0..64 {
-                let piece: u64 = rng.gen_range(0..=12);
-                board[i] = Piece::u64_to_piece(&piece);
-            }
+        x.sort();
+        expected_moves.sort();
 
-            let tmp: Board = Board {
-                board_state: board,
-                board_value: 0
-            };
+        assert_eq!(x, expected_moves);
+    }
 
-            boards.push(tmp);
-        }
+    #[test]
+    fn king_move_cant_take() {
+        let game = Game::new_from_string("8/8/2PPP3/2PKP3/2PPP3/8/8/8".to_string(), true);
 
+        let mut all_moves = game.get_all_moves();
+        let mut x = all_moves[27].take().unwrap();
 
-        println!("boards: {}", boards.len());
+        let mut expected_moves = vec![
+        ];
 
-        return boards;
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn king_move_take() {
+        let game = Game::new_from_string("8/8/2ppp3/2pKp3/2ppp3/8/8/8".to_string(), true);
+
+        let mut all_moves = game.get_all_moves();
+        let mut x = all_moves[27].take().unwrap();
+
+        let mut expected_moves = vec![
+            Standard(18), Standard(19), Standard(20),
+            Standard(26), Standard(28),
+            Standard(34), Standard(35), Standard(36),
+        ];
+
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn pawn_move_single_double() {
+        let game = Game::new_from_string("8/3p4/8/8/8/8/3P4/8".to_string(), true);
+
+        let all_moves = game.get_all_moves();
+
+        let black_len = match &all_moves[11] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(black_len, 0);
+
+        let white_len = match &all_moves[51] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(white_len, 2);
+    }
+
+    #[test]
+    fn pawn_move_all_moves_available() {
+        let game = Game::new_from_string("8/3p4/2P1P3/8/8/2p1p3/3P4/8".to_string(), true);
+
+        let all_moves = game.get_all_moves();
+
+        let black_len = match &all_moves[11] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(black_len, 0);
+
+        let white_len = match &all_moves[51] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(white_len, 4);
+    }
+
+    #[test]
+    fn pawn_move_cant_take_allied_pieces() {
+        let game = Game::new_from_string("8/3p4/2p1p3/8/8/2P1P3/3P4/8".to_string(), false);
+
+        let all_moves = game.get_all_moves();
+
+        let black_len = match &all_moves[11] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(black_len, 2);
+
+        let white_len = match &all_moves[51] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(white_len, 0);
+    }
+
+    #[test]
+    fn pawn_move_can_take_outside_start_squares() {
+        let game = Game::new_from_string("8/8/3p4/2P1P3/2p1p3/3P4/8/8".to_string(), false);
+
+        let all_moves = game.get_all_moves();
+
+        let black_len = match &all_moves[19] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(black_len, 3);
+
+        let white_len = match &all_moves[43] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(white_len, 0);
+    }
+
+    #[test]
+    fn pawn_move_cant_move_double() {
+        let game = Game::new_from_string("8/8/3p4/8/8/3P4/8/8".to_string(), true);
+
+        let all_moves = game.get_all_moves();
+
+        let black_len = match &all_moves[19] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(black_len, 0);
+
+        let white_len = match &all_moves[43] {
+            Some(x) => x.len(),
+            None => 0
+        };
+
+        assert_eq!(white_len, 1);
+    }
+
+    #[test]
+    fn rook_move_nothing() {
+        let game = Game::new_from_string("8/8/8/3R4/8/8/8/8".to_string(), true);
+
+        let mut all_moves = game.get_all_moves();
+
+        let mut x = all_moves[27].take().unwrap();
+        x.sort();
+
+        let mut expected_moves = vec![
+            Standard(3), Standard(11), Standard(19), Standard(35), Standard(43), Standard(51), Standard(59),
+            Standard(24), Standard(25), Standard(26), Standard(28), Standard(29), Standard(30), Standard(31),
+        ];
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn rook_move_1_piece_opponent() {
+        let game = Game::new_from_string("8/8/3p4/2pR1p2/8/3p4/8/8".to_string(), true);
+
+        let mut all_moves = game.get_all_moves();
+
+        let mut x = all_moves[27].take().unwrap();
+        x.sort();
+
+        let mut expected_moves = vec![
+            FutureMove(3), FutureMove(11), Standard(19), Standard(35), Standard(43), FutureMove(51), FutureMove(59),
+            FutureMove(24), FutureMove(25), Standard(26), Standard(28), Standard(29), FutureMove(30), FutureMove(31)
+        ];
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn rook_move_2_piece_opponent() {
+        let game = Game::new_from_string("8/3p4/3p4/1ppR1pp1/8/3p4/3p4/8".to_string(), true);
+
+        let mut all_moves = game.get_all_moves();
+
+        let mut x = all_moves[27].take().unwrap();
+        x.sort();
+
+        let mut expected_moves = vec![
+            FutureMove(11), Standard(19), Standard(35), Standard(43), FutureMove(51),
+            FutureMove(25), Standard(26), Standard(28), Standard(29), FutureMove(30)
+        ];
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_transform_standard() {
+        let state = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
+        assert_eq!(state.board.board_state, debug_structs::get_normal_board());
+    }
+
+    #[test]
+    fn test_castle_white() {
+        let game = Game::new_from_string("8/8/8/8/8/8/8/R3K2R".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+        debug::debug_board_state_with_moves_marked_for_index(&game, 60, &all_moves);
     }
 
     //#[test]
-    fn hash_performance_test() {
+    /*fn hash_performance_test() {
 
-        let boards = generate_boards(1_000_000);
+        let boards = debug_structs::generate_boards(1_000_000);
 
         let mut hash: Vec<u64> = vec![];
         let cloned_boards2 = boards.clone();
@@ -390,80 +505,30 @@ mod tests {
         for (i, x) in hash.iter().enumerate() {
             assert_eq!(*x, hash2[i])
         }
-    }
+    }*/
 
-    //#[test]
-    fn create_board_performance_test() {
+    /*#[test]
+    fn make_move_performance_test() {
 
-        let boards = generate_boards(1_000_000);
+        let games = debug_structs::generate_games(1_000_000);
 
         let now = Instant::now();
 
-        for board in boards {
-            let game = Game::new_from_arr(board.board_state);
+        for game in games.iter() {
+            let all_moves = game.get_all_moves();
         }
 
         let elapsed = now.elapsed();
 
+
+        /*let current_index = 11;
+        debug::debug_board_state_with_moves_marked(&game, current_index, &all_moves);
+        println!("moves_count: {}", match &all_moves[current_index] {
+            Some(x) => x.len(),
+            None => 0
+        });*/
         println!("time: {:.2?}", elapsed);
-    }
-
-    #[test]
-    fn make_move_performance_test() {
-        let mut arr : [Option<Piece>; 64] = [
-            Some(Piece { piece_type: Rook, is_white: false}),
-            Some(Piece { piece_type: Knight, is_white: false}),
-            Some(Piece { piece_type: Bishop, is_white: false}),
-            Some(Piece { piece_type: Queen, is_white: false}),
-            Some(Piece { piece_type: King, is_white: false}),
-            Some(Piece { piece_type: Bishop, is_white: false}),
-            Some(Piece { piece_type: Knight, is_white: false}),
-            Some(Piece { piece_type: Rook, is_white: false}),
-
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-            Some(Piece { piece_type: Pawn, is_white: false}),
-
-            None, None, None, None, None, None, None, None,
-            None, None, None, None, None, None, None, None,
-            None, None, None, None, None, None, None, None,
-            None, None, None, None, None, None, None, None,
-
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-            Some(Piece { piece_type: Pawn, is_white: true}),
-
-            Some(Piece { piece_type: Rook, is_white: true}),
-            Some(Piece { piece_type: Knight, is_white: true}),
-            Some(Piece { piece_type: Bishop, is_white: true}),
-            Some(Piece { piece_type: Queen, is_white: true}),
-            Some(Piece { piece_type: King, is_white: true}),
-            Some(Piece { piece_type: Bishop, is_white: true}),
-            Some(Piece { piece_type: Knight, is_white: true}),
-            Some(Piece { piece_type: Rook, is_white: true}),
-        ];
-
-        let game = Game::new_from_arr(arr);
-
-        let now = Instant::now();
-
-        let all_moves = game.get_all_moves();
-
-        let elapsed = now.elapsed();
-
-        println!("moves_count: {}", all_moves.len());
-        println!("time: {:.2?}", elapsed);
-    }
+    }*/
 
 
 
