@@ -281,8 +281,7 @@ pub mod game {
             moves
         }
 
-        pub fn make_move(&mut self, index: usize, to: usize) -> bool {
-            let moves = self.get_all_moves();
+        pub fn make_move(&mut self, moves: &[Option<Vec<MoveType>>; 64], index: usize, to: usize) -> bool {
 
             let postion = moves.get(index).unwrap();
 

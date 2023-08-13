@@ -844,7 +844,7 @@ mod tests {
 
         assert_eq!(game.board.board_value, 134_217_728);
 
-        let moved = game.make_move(27, 3);
+        let moved = game.make_move(&all_moves,27, 3);
 
         assert_eq!(moved, true);
 
@@ -864,7 +864,7 @@ mod tests {
 
         assert_eq!(game.board.board_value, 1_224_979_098_644_774_912);
 
-        let moved = game.make_move(60, 58);
+        let moved = game.make_move(&all_moves,60, 58);
 
         assert_eq!(moved, true);
 
