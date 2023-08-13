@@ -103,7 +103,7 @@ pub mod piece {
             // Move straight
             let straight_move = if self.is_white {*index - 8} else {*index + 8};
             if !Board::get_board_state_from_position(board, &straight_move) {
-                moves.push(MoveType::Standard(straight_move));
+                moves.push(MoveType::Standard(straight_move, self.is_white));
             }
 
             // Move diagonal left
@@ -112,7 +112,7 @@ pub mod piece {
                 match board.board_state[usize::from(diagonal_left)] {
                     Some(piece) => {
                         if piece.is_white != self.is_white {
-                            moves.push(MoveType::Standard(diagonal_left));
+                            moves.push(MoveType::Standard(diagonal_left, self.is_white));
                         }
                     },
                     None => panic!("Should never happen")
@@ -125,7 +125,7 @@ pub mod piece {
                 match board.board_state[usize::from(diagonal_right)] {
                     Some(piece) => {
                         if piece.is_white != self.is_white {
-                            moves.push(MoveType::Standard(diagonal_right));
+                            moves.push(MoveType::Standard(diagonal_right, self.is_white));
                         }
                     },
                     None => panic!("Should never happen")
@@ -136,14 +136,14 @@ pub mod piece {
             if self.is_white && *index >= 48 && *index <= 55 {
                 let double_move = *index - 16;
                 if !Board::get_board_state_from_position(board, &double_move) {
-                    moves.push(MoveType::Standard(double_move));
+                    moves.push(MoveType::Standard(double_move, self.is_white));
                 }
 
             }
             else if !self.is_white && *index >= 8 && *index <= 15 {
                 let double_move = *index + 16;
                 if !Board::get_board_state_from_position(board, &double_move) {
-                    moves.push(MoveType::Standard(double_move));
+                    moves.push(MoveType::Standard(double_move, self.is_white));
                 }
             }
 
@@ -156,7 +156,7 @@ pub mod piece {
                 match board.board_state[usize::from(index)] {
                     Some(piece) => {
                         if piece.is_white != self.is_white {
-                            let rook_move = if *count == 0 { MoveType::Standard(index)} else { MoveType::FutureMove(index)};
+                            let rook_move = if *count == 0 { MoveType::Standard(index, self.is_white)} else { MoveType::FutureMove(index, self.is_white)};
                             return (1, Some(rook_move))
                         }
                         else {
@@ -166,7 +166,7 @@ pub mod piece {
                     None => panic!("Should never happen")
                 }
             } else {
-                let rook_move = if *count == 0 { MoveType::Standard(index)} else { MoveType::FutureMove(index)};
+                let rook_move = if *count == 0 { MoveType::Standard(index, self.is_white)} else { MoveType::FutureMove(index, self.is_white)};
                 return (0, Some(rook_move))
             }
         }
@@ -264,27 +264,40 @@ pub mod piece {
         pub fn king_moves(&self, board: &Board, index: &u8) -> Vec<MoveType> {
             let mut moves: Vec<MoveType> = vec![];
 
-            let minus_moves: [Option<u8>; 8] = [
+            let king_move_indexes: [Option<u8>; 8] = [
                 index.checked_sub(1), index.checked_sub(9), index.checked_sub(8),
                 index.checked_sub(7), index.checked_add(1), index.checked_add(7),
                 index.checked_add(8), index.checked_add(9)
             ];
             // For anything that subtracts
             for i in 0..8 {
-                match minus_moves[i] {
+                match king_move_indexes[i] {
                     Some(val) => {
+
+                        if val % 8 == 0 && index % 8 == 7 {
+                            continue;
+                        }
+
+                        if val % 8 == 7 && index % 8 == 0 {
+                            continue;
+                        }
+
+                        if val > 63 {
+                            continue;
+                        }
+
                         if Board::get_board_state_from_position(board, &val) {
                             match board.board_state[usize::from(val)] {
                                 Some(piece) => {
                                     if piece.is_white != self.is_white {
-                                        moves.push(MoveType::Standard(val));
+                                        moves.push(MoveType::Standard(val, self.is_white));
                                     }
                                 },
                                 None => panic!("Should never happen")
                             }
                         }
                         else {
-                            moves.push(MoveType::Standard(val));
+                            moves.push(MoveType::Standard(val, self.is_white));
                         }
                     },
                     None => {}

@@ -102,20 +102,32 @@ pub mod game {
                     Some(moves) => {
                         for single_move in moves.iter() {
                             match single_move {
-                                Standard(to) => {
-                                    if *to == 57 || *to == 58 || *to == 59 {
-                                        can_castle_left = false;
-                                        println!("Can't castle left");
-                                    } else if *to == 61 || *to == 62 {
-                                        can_castle_right = false;
-                                        println!("Can't castle right");
+                                Standard(to, color) => {
+                                    if !*color {
+                                        if *to == 60 {
+                                            can_castle_left = false;
+                                            can_castle_right = false;
+                                            break;
+                                        }
+                                        if *to == 58 || *to == 59 {
+                                            can_castle_left = false;
+                                        } else if *to == 61 || *to == 62 {
+                                            can_castle_right = false;
+                                        }
                                     }
                                 },
-                                MoveType::Promotion(to, _) => {
-                                    if *to == 57 || *to == 58 || *to == 59 {
-                                        can_castle_left = false;
-                                    } else if *to == 61 || *to == 62 {
-                                        can_castle_right = false;
+                                MoveType::Promotion(to, _, color) => {
+                                    if !*color {
+                                        if *to == 60 {
+                                            can_castle_left = false;
+                                            can_castle_right = false;
+                                            break;
+                                        }
+                                        if *to == 58 || *to == 59 {
+                                            can_castle_left = false;
+                                        } else if *to == 61 || *to == 62 {
+                                            can_castle_right = false;
+                                        }
                                     }
                                 },
                                 _ => continue
@@ -140,7 +152,7 @@ pub mod game {
                 if !Board::get_board_state_from_position(&self.board, &57) &&
                     !Board::get_board_state_from_position(&self.board, &58) &&
                     !Board::get_board_state_from_position(&self.board, &59) {
-                    moves.push(Castle(56, 59, 60, 58));
+                    moves.push(Castle(56, 59, 60, 58, true));
                 }
             }
 
@@ -148,12 +160,81 @@ pub mod game {
             if can_right {
                 if !Board::get_board_state_from_position(&self.board, &61) &&
                     !Board::get_board_state_from_position(&self.board, &62) {
-                    moves.push(Castle(63, 61, 60, 62));
+                    moves.push(Castle(63, 61, 60, 62, true));
+                }
+            }
+            moves
+        }
+
+        pub fn check_attack_castle_black(&self, moves: &[Option<Vec<MoveType>>; 64]) -> (bool, bool) {
+            let mut can_castle_left = true;
+            let mut can_castle_right = true;
+            for i in 0..64 {
+                match &moves[i] {
+                    Some(moves) => {
+                        for single_move in moves.iter() {
+                            match single_move {
+                                Standard(to, color) => {
+                                    if *color {
+                                        if *to == 4 {
+                                            can_castle_left = false;
+                                            can_castle_right = false;
+                                            break;
+                                        }
+                                        if *to == 2 || *to == 3 {
+                                            can_castle_left = false;
+                                        } else if *to == 5 || *to == 6 {
+                                            can_castle_right = false;
+                                        }
+                                    }
+                                },
+                                MoveType::Promotion(to, _, color) => {
+                                    if *color {
+                                        if *to == 4 {
+                                            can_castle_left = false;
+                                            can_castle_right = false;
+                                            break;
+                                        }
+                                        if *to == 2 || *to == 3 {
+                                            can_castle_left = false;
+                                        } else if *to == 5 || *to == 6 {
+                                            can_castle_right = false;
+                                        }
+                                    }
+                                },
+                                _ => continue
+                            }
+                        }
+                    },
+                    None => continue
                 }
             }
 
-            //vec![Castle(56, 59, 60, 58), Castle(63, 61, 60, 62)]
-            println!("castle moves: {:?}", can_left);
+            (can_castle_left,can_castle_right)
+        }
+
+        pub fn castle_black(&self, all_moves: &[Option<Vec<MoveType>>; 64]) -> Vec<MoveType> {
+            let mut moves = vec![];
+
+
+            let (can_left, can_right) = self.check_attack_castle_black(all_moves);
+
+            // Check spaces between king and rook left are empty
+            if can_left {
+                if !Board::get_board_state_from_position(&self.board, &1) &&
+                    !Board::get_board_state_from_position(&self.board, &2) &&
+                    !Board::get_board_state_from_position(&self.board, &3) {
+                    moves.push(Castle(0, 3, 4, 2, false));
+                }
+            }
+
+            // Check spaces between king and rook right are empty
+            if can_right {
+                if !Board::get_board_state_from_position(&self.board, &5) &&
+                    !Board::get_board_state_from_position(&self.board, &6) {
+                    moves.push(Castle(7, 5, 4, 6, false));
+                }
+            }
             moves
         }
 
@@ -162,10 +243,6 @@ pub mod game {
             for i in 0..64 {
                 match self.board.board_state[i] {
                     Some(piece) => {
-                        if piece.is_white != self.is_white_turn {
-                            continue;
-                        }
-
                         let piece_moves = piece.get_moves(&self.board, &(i as u8));
                         moves[i] = Some(piece_moves);
                     },
@@ -188,10 +265,60 @@ pub mod game {
                     }
                 }
             } else {
-
+                let mut black_castle = self.castle_black(&moves);
+                if black_castle.len() > 0 {
+                    let black_king_position = moves.get_mut(4);
+                    match black_king_position {
+                        Some(x) =>
+                            match x {
+                                Some(y) => y.append(&mut black_castle),
+                                None => ()
+                            },
+                        None => ()
+                    }
+                }
             }
             moves
         }
+
+        pub fn make_move(&mut self, index: usize, to: usize) -> bool {
+            let moves = self.get_all_moves();
+
+            let postion = moves.get(index).unwrap();
+
+            match postion {
+                Some(x) => {
+                    for single_move in x.iter() {
+                        match single_move {
+                            Standard(move_type_to, _) => {
+                                if usize::from(*move_type_to) == to {
+                                    self.board.make_move(index, usize::from(to));
+                                    self.is_white_turn = !self.is_white_turn;
+                                    return true;
+                                }
+                            },
+                            MoveType::Promotion(_to, _piece, _) => {
+                                panic!("Promotion???");
+                            },
+                            Castle(rook_from, rook_to, king_from, king_to, _) => {
+                                if usize::from(*king_to) == to {
+                                    self.board.make_move(usize::from(*rook_from), usize::from(*rook_to));
+                                    self.board.make_move(usize::from(*king_from), usize::from(*king_to));
+                                    self.is_white_turn = !self.is_white_turn;
+                                    return true;
+                                }
+                            },
+                            _ => ()
+                        }
+                    }
+                },
+                None => ()
+            }
+
+
+            false
+        }
+
     }
 
 }

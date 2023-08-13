@@ -7,26 +7,26 @@ pub mod board {
     use crate::game::game::{Game};
 
     pub enum MoveType {
-        Standard(u8), // move(square to move to)
-        FutureMove(u8), // maybe a capture type?
-        Castle(u8, u8, u8, u8), // castle(king start, king end, rook start, rook end)
-        Promotion(u8, Piece) // promotion(square to move to, piece to promote to)
+        Standard(u8, bool), // move(square to move to, color of piece)
+        FutureMove(u8, bool), // FutureMove(square to move to, color of piece)
+        Castle(u8, u8, u8, u8, bool), // castle(king start, king end, rook start, rook end, color of piece)
+        Promotion(u8, Piece, bool) // promotion(square to move to, piece to promote to, color of piece)
     }
 
     impl Debug for MoveType {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             match self {
-                MoveType::Standard(val) => {
-                    write!(f, "Standard({})", val)
+                MoveType::Standard(val, color) => {
+                    write!(f, "Standard({}, {})", val, color)
                 },
-                MoveType::FutureMove(val) => {
-                    write!(f, "FutureMove({})", val)
+                MoveType::FutureMove(val, color) => {
+                    write!(f, "FutureMove({}, {})", val, color)
                 },
-                MoveType::Promotion(val, piece) => {
-                    write!(f, "Promotion({}, {})", val, piece)
+                MoveType::Promotion(val, piece, color) => {
+                    write!(f, "Promotion({}, {}, {})", val, piece, color)
                 },
-                MoveType::Castle(king_start, king_end, rook_start, rook_end) => {
-                    write!(f, "Castle({}, {}, {}, {})", king_start, king_end, rook_start, rook_end)
+                MoveType::Castle(king_start, king_end, rook_start, rook_end, color) => {
+                    write!(f, "Castle({}, {}, {}, {}, {})", king_start, king_end, rook_start, rook_end, color)
                 }
             }
         }
@@ -35,17 +35,17 @@ pub mod board {
     impl fmt::Display for MoveType {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             match self {
-                MoveType::Standard(val) => {
-                    write!(f, "Standard({})", val)
+                MoveType::Standard(val, color) => {
+                    write!(f, "Standard({}, {})", val, color)
                 },
-                MoveType::FutureMove(val) => {
-                    write!(f, "FutureMove({})", val)
+                MoveType::FutureMove(val, color) => {
+                    write!(f, "FutureMove({}, {})", val, color)
                 },
-                MoveType::Promotion(val, piece) => {
-                    write!(f, "Promotion({}, {})", val, piece)
+                MoveType::Promotion(val, piece, color) => {
+                    write!(f, "Promotion({}, {}, {})", val, piece, color)
                 },
-                MoveType::Castle(king_start, king_end, rook_start, rook_end) => {
-                    write!(f, "Castle({}, {}, {}, {})", king_start, king_end, rook_start, rook_end)
+                MoveType::Castle(king_start, king_end, rook_start, rook_end, color) => {
+                    write!(f, "Castle({}, {}, {}, {}, {})", king_start, king_end, rook_start, rook_end, color)
                 }
             }
         }
@@ -58,9 +58,9 @@ pub mod board {
     impl PartialEq<Self> for MoveType {
         fn eq(&self, other: &Self) -> bool {
             match self {
-                MoveType::Standard(val) => {
+                MoveType::Standard(val, _) => {
                     match other {
-                        MoveType::Standard(val2) => {
+                        MoveType::Standard(val2, _) => {
                             return val == val2;
                         },
                         _ => {
@@ -68,10 +68,20 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::FutureMove(val) => {
+                MoveType::FutureMove(val, _) => {
                     match other {
-                        MoveType::FutureMove(val2) => {
+                        MoveType::FutureMove(val2, _) => {
                             return val == val2;
+                        },
+                        _ => {
+                            return false;
+                        }
+                    }
+                },
+                MoveType::Castle(king_start, king_end, rook_start, rook_end, _) => {
+                    match other {
+                        MoveType::Castle(king_start2, king_end2, rook_start2, rook_end2, _) => {
+                            return king_start == king_start2 && king_end == king_end2 && rook_start == rook_start2 && rook_end == rook_end2;
                         },
                         _ => {
                             return false;
@@ -86,26 +96,49 @@ pub mod board {
     impl PartialOrd<Self> for MoveType {
         fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
             match self {
-                MoveType::Standard(val) => {
+                MoveType::Standard(val, _) => {
                     match other {
-                        MoveType::Standard(val2) => {
+                        MoveType::Standard(val2, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::FutureMove(val2) => {
+                        MoveType::FutureMove(val2, _) => {
                             return val.partial_cmp(val2);
+                        },
+                        MoveType::Castle(rook_start, _, _, _, _) => {
+                            return val.partial_cmp(rook_start);
                         },
                         _ => {
                             return None;
                         }
                     }
                 },
-                MoveType::FutureMove(val) => {
+                MoveType::FutureMove(val, _) => {
                     match other {
-                        MoveType::Standard(val2) => {
+                        MoveType::Standard(val2, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::FutureMove(val2) => {
+                        MoveType::FutureMove(val2, _) => {
                             return val.partial_cmp(val2);
+                        },
+                        MoveType::Castle(rook_start, _, _, _, _) => {
+                            return val.partial_cmp(rook_start);
+                        },
+                        _ => {
+                            return None;
+                        }
+                    }
+                },
+                MoveType::Castle(rook_start_, _, _, _, _) =>
+                {
+                    match other {
+                        MoveType::Standard(val2, _) => {
+                            return rook_start_.partial_cmp(val2);
+                        },
+                        MoveType::FutureMove(val2, _) => {
+                            return rook_start_.partial_cmp(val2);
+                        },
+                        MoveType::Castle(rook_start, _, _, _, _) => {
+                            return rook_start_.partial_cmp(rook_start);
                         },
                         _ => {
                             return None;
@@ -120,26 +153,49 @@ pub mod board {
     impl Ord for MoveType {
         fn cmp(&self, other: &Self) -> Ordering {
             match self {
-                MoveType::Standard(val) => {
+                MoveType::Standard(val, _) => {
                     match other {
-                        MoveType::Standard(val2) => {
+                        MoveType::Standard(val2, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::FutureMove(val2) => {
+                        MoveType::FutureMove(val2, _) => {
                             return val.cmp(val2);
+                        },
+                        MoveType::Castle(rook_start, _, _, _, _) => {
+                            return val.cmp(rook_start);
                         },
                         _ => {
                             return Ordering::Less;
                         }
                     }
                 },
-                MoveType::FutureMove(val) => {
+                MoveType::FutureMove(val, _) => {
                     match other {
-                        MoveType::Standard(val2) => {
+                        MoveType::Standard(val2, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::FutureMove(val2) => {
+                        MoveType::FutureMove(val2, _) => {
                             return val.cmp(val2);
+                        },
+                        MoveType::Castle(rook_start, _, _, _, _) => {
+                            return val.cmp(rook_start);
+                        },
+                        _ => {
+                            return Ordering::Less;
+                        }
+                    }
+                },
+                MoveType::Castle(rook_start, _, _, _, _) =>
+                {
+                    match other {
+                        MoveType::Standard(val2, _) => {
+                            return rook_start.cmp(val2);
+                        },
+                        MoveType::FutureMove(val2, _) => {
+                            return rook_start.cmp(val2);
+                        },
+                        MoveType::Castle(rook_start_second, _, _, _, _) => {
+                            return rook_start.cmp(rook_start_second);
                         },
                         _ => {
                             return Ordering::Less;
@@ -226,6 +282,19 @@ pub mod board {
                 return true; 
             }
             return false;
+        }
+
+        pub fn make_move(&mut self, from: usize, to: usize) -> () {
+            let current_option_piece = self.board_state[from];
+            match current_option_piece {
+                Some(piece) => {
+                    self.board_value = self.board_value ^ 1 << from;
+                    self.board_value = self.board_value | 1 << to;
+                    self.board_state[from] = None;
+                    self.board_state[to] = Some(piece);
+                },
+                None => panic!("No piece at position")
+            }
         }
 
     }

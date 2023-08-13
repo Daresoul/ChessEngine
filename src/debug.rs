@@ -12,7 +12,7 @@ pub mod debug
            if i % 8 == 0 {
                print!("\n");
            }
-           print!("{} ", Board::get_board_state_from_position(&game.board, &(i as u8)));
+           print!("{} ", Board::get_board_state_from_position(&game.board, &(i as u8)) as u8);
         }
     }
 
@@ -64,19 +64,19 @@ pub mod debug
                                 let mut string = "NN";
                                 for single_move in moves.iter() {
                                     match single_move {
-                                        Standard(index) => {
+                                        Standard(index, _) => {
                                             if *index == i as u8 {
-                                                string = "KN";
+                                                string = "HH";
                                             }
                                         },
-                                        FutureMove(index) => {
+                                        FutureMove(index, _) => {
                                             if *index == i as u8 {
-                                                string = "ON";
+                                                string = "OO";
                                             }
                                         },
-                                        MoveType::Castle(a,b,c,d) => {
+                                        MoveType::Castle(a,b,c,d, _) => {
                                             if *d == i as u8 {
-                                                string = "CN";
+                                                string = "CC";
                                             }
                                         },
                                         _ => ()
@@ -116,14 +116,14 @@ pub mod debug
                                 for move_type in moves.iter() {
                                     match move_type {
                                         // if the square we are on is in the moves vector
-                                        Standard(index) => {
+                                        Standard(index, _) => {
                                             if *index == i as u8 {
                                                 b = 1;
                                                 p = game.board.board_state[j];
                                                 break;
                                             }
                                         },
-                                        FutureMove(index) => {
+                                        FutureMove(index, _) => {
                                             if *index == i as u8 {
                                                 b = 2;
                                                 p = game.board.board_state[j];
