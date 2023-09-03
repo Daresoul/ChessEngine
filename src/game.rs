@@ -7,7 +7,7 @@ pub mod game {
     use crate::piece::piece::{Piece, PieceType};
     use crate::piece::piece::PieceType::{Bishop, King, Knight, Pawn, Queen, Rook};
 
-    #[derive(Clone)]
+    #[derive(Clone, Copy)]
     pub struct Game {
         pub board: Board,
         pub is_white_turn: bool,

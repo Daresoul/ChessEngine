@@ -208,7 +208,7 @@ pub mod board {
         }
     }
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct Board {
         pub board_value: u64,
         pub board_state: [Option<Piece>; 64],
