@@ -119,6 +119,17 @@ pub mod piece {
             }
         }
 
+        pub fn get_value(&self) -> u8 {
+            match self.piece_type {
+                PieceType::Pawn => 1,
+                PieceType::Rook => 5,
+                PieceType::Knight => 3,
+                PieceType::Bishop => 3,
+                PieceType::Queen => 9,
+                _ => 0
+            }
+        }
+
         pub fn get_moves(&self, board: &Board, index: &u8) -> Vec<MoveType> {
             match self.piece_type {
                 PieceType::Pawn => self.pawn_moves(board, index),

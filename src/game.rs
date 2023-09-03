@@ -270,6 +270,24 @@ pub mod game {
             moves
         }
 
+        pub fn evaluate_board(&self) -> i32 {
+            let mut score: i32 = 0;
+            for i in 0..64 {
+                match self.board.board_state[i] {
+                    Some(piece) => {
+                        if piece.is_white {
+                            score += i32::from(piece.get_value());
+                        } else {
+                            score -= i32::from(piece.get_value());
+                        }
+                    },
+                    None => ()
+                }
+            }
+
+            score
+        }
+
         pub fn make_move(&mut self, chosen_move: &MoveType) -> bool {
 
             match chosen_move {
