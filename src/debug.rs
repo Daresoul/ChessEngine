@@ -1,12 +1,101 @@
 
 pub mod debug
 {
+    use MoveType::Castle;
     use crate::game::game::Game;
     use crate::board::board::{Board, MoveType};
     use crate::board::board::MoveType::{FutureMove, Standard};
     use crate::piece::piece::Piece;
 
-    pub fn debug_board(game: &Game) {
+    pub fn get_all_from_position(moves: &Vec<MoveType>, starting_square: usize) -> Vec<MoveType> {
+        let mut selected_moves: Vec<MoveType> = vec![];
+
+        for single_move in moves.iter() {
+            match single_move {
+                Standard(from, to, _) => {
+                    if *from == starting_square as u8 {
+                        selected_moves.push(*single_move);
+                    }
+                },
+                FutureMove(from, to, _) => {
+                    if *from == starting_square as u8 {
+                        selected_moves.push(*single_move);
+                    }
+                },
+                Castle(rook_from, _, king_from, _, _) => {
+                    if *rook_from == starting_square as u8 {
+                        selected_moves.push(*single_move);
+                    }
+
+                    if *king_from == starting_square as u8 {
+                        selected_moves.push(*single_move);
+                    }
+                },
+                _ => ()
+            }
+        }
+
+        return selected_moves;
+    }
+
+    pub fn count_color(all_moves: &Vec<MoveType>, is_white: bool) -> usize {
+        let mut count = 0;
+        for single_move in all_moves.iter() {
+            match single_move {
+                Standard(_, _, color) => {
+                    if *color == is_white {
+                        count += 1;
+                    }
+                }
+                FutureMove(_, _, color) => {
+                    if *color == is_white {
+                        count += 1;
+                    }
+                },
+                Castle(_, _, _, _, color) => {
+                    if *color == is_white {
+                        count += 1;
+                    }
+                },
+                _ => ()
+            }
+        }
+        return count;
+    }
+
+    pub fn find_specific_move(moves: &Vec<MoveType>, from: u8, to: u8) -> MoveType {
+        for single_move in moves.iter() {
+            match single_move {
+                Standard(f, t, _) => {
+                    if *f == from && *t == to {
+                        return *single_move;
+                    }
+                },
+                FutureMove(f, t, _) => {
+                    if *f == from && *t == to {
+                        return *single_move;
+                    }
+                },
+                Castle(rf, rt, kf, kt, _) => {
+                    if *rf == from && *rt == to {
+                        return *single_move;
+                    }
+
+                    if *kf == from && *kt == to {
+                        return *single_move;
+                    }
+                },
+                _ => ()
+            }
+        }
+
+        return Standard(0,0,false)
+
+    }
+
+
+
+    /*pub fn debug_board(game: &Game) {
        print!("board_value: {}", game.board.board_value);
        for i in 0..64 {
            if i % 8 == 0 {
@@ -149,6 +238,6 @@ pub mod debug
 
         }
         print!("\n");
-    }
+    }*/
 }
 

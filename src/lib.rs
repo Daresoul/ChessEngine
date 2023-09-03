@@ -38,10 +38,10 @@ pub mod debug_structs;
 
      develop pawns: done
      develop rook: done
-     develop king: todo
-     develop castling: todo
+     develop king: done
+     develop castling: done
      develop en passant: todo
-     develop move: todo
+     develop move: sorta done
      develop check (as described above): todo
      develop simple board evaluation (with checkmate): todo
      develop rest of simple moves: todo
@@ -73,12 +73,9 @@ mod tests {
     use crate::piece::piece::PieceType::{King, Rook, Bishop, Knight, Pawn, Queen};
     use crate::game::game::{Game};
     use crate::board::board::{Board};
-    use crate::piece::piece::{Piece, PieceType};
-    use std::time::Instant;
+    use crate::piece::piece::{Piece};
     use crate::board::board::MoveType::{Castle, FutureMove, Standard};
     use crate::debug::debug;
-    use crate::debug::debug::debug_board_state_with_moves_marked;
-    use crate::debug::debug::debug_board_state_with_moves_marked_for_index;
     use crate::debug_structs::debug_structs;
 
     #[test]
@@ -254,14 +251,15 @@ mod tests {
         let game = Game::new_from_string("8/8/8/3K4/8/8/8/8".to_string(), true);
 
         let mut all_moves = game.get_all_moves();
-        let mut x = all_moves[27].take().unwrap();
 
         let mut expected_moves = vec![
-            Standard(18, true), Standard(19, true), Standard(20, true),
-            Standard(26, true), Standard(28, true),
-            Standard(34, true), Standard(35, true), Standard(36, true),
+            Standard(27, 18, true), Standard(27, 19, true),
+            Standard(27, 20, true), Standard(27, 26, true),
+            Standard(27, 28, true), Standard(27, 34, true),
+            Standard(27, 35, true), Standard(27, 36, true),
         ];
 
+        let mut x = debug::get_all_from_position(&all_moves, 27);
         x.sort();
         expected_moves.sort();
 
@@ -273,12 +271,12 @@ mod tests {
         let game = Game::new_from_string("7K/8/8/8/8/8/8/8".to_string(), true);
 
         let mut all_moves = game.get_all_moves();
-        let mut x = all_moves[7].take().unwrap();
 
         let mut expected_moves = vec![
-            Standard(6, true), Standard(14, true), Standard(15, true),
+            Standard(7,6, true), Standard(7,14, true), Standard(7,15, true),
         ];
 
+        let mut x = debug::get_all_from_position(&all_moves, 7);
         x.sort();
         expected_moves.sort();
 
@@ -290,12 +288,12 @@ mod tests {
         let game = Game::new_from_string("8/8/8/8/8/8/8/7K".to_string(), true);
 
         let mut all_moves = game.get_all_moves();
-        let mut x = all_moves[63].take().unwrap();
 
         let mut expected_moves = vec![
-            Standard(54, true), Standard(55, true), Standard(62, true),
+            Standard(63, 54, true), Standard(63, 55, true), Standard(63, 62, true),
         ];
 
+        let mut x = debug::get_all_from_position(&all_moves, 63);
         x.sort();
         expected_moves.sort();
 
@@ -307,12 +305,12 @@ mod tests {
         let game = Game::new_from_string("8/8/8/8/8/8/8/K7".to_string(), true);
 
         let mut all_moves = game.get_all_moves();
-        let mut x = all_moves[56].take().unwrap();
 
         let mut expected_moves = vec![
-            Standard(48, true), Standard(49, true), Standard(57, true),
+            Standard(56,48, true), Standard(56,49, true), Standard(56,57, true),
         ];
 
+        let mut x = debug::get_all_from_position(&all_moves, 56);
         x.sort();
         expected_moves.sort();
 
@@ -324,12 +322,12 @@ mod tests {
         let game = Game::new_from_string("K7/8/8/8/8/8/8/8".to_string(), true);
 
         let mut all_moves = game.get_all_moves();
-        let mut x = all_moves[0].take().unwrap();
 
         let mut expected_moves = vec![
-            Standard(1, true), Standard(8, true), Standard(9, true),
+            Standard(0,1, true), Standard(0,8, true), Standard(0,9, true),
         ];
 
+        let mut x = debug::get_all_from_position(&all_moves, 0);
         x.sort();
         expected_moves.sort();
 
@@ -341,11 +339,11 @@ mod tests {
         let game = Game::new_from_string("8/8/2PPP3/2PKP3/2PPP3/8/8/8".to_string(), true);
 
         let mut all_moves = game.get_all_moves();
-        let mut x = all_moves[27].take().unwrap();
 
         let mut expected_moves = vec![
         ];
 
+        let mut x = debug::get_all_from_position(&all_moves, 27);
         x.sort();
         expected_moves.sort();
 
@@ -357,14 +355,14 @@ mod tests {
         let game = Game::new_from_string("8/8/2ppp3/2pKp3/2ppp3/8/8/8".to_string(), true);
 
         let mut all_moves = game.get_all_moves();
-        let mut x = all_moves[27].take().unwrap();
 
         let mut expected_moves = vec![
-            Standard(18, true), Standard(19, true), Standard(20, true),
-            Standard(26, true), Standard(28, true),
-            Standard(34, true), Standard(35, true), Standard(36, true),
+            Standard(27,18, true), Standard(27,19, true), Standard(27,20, true),
+            Standard(27,26, true), Standard(27,28, true),
+            Standard(27,34, true), Standard(27,35, true), Standard(27,36, true),
         ];
 
+        let mut x = debug::get_all_from_position(&all_moves, 27);
         x.sort();
         expected_moves.sort();
 
@@ -377,17 +375,11 @@ mod tests {
 
         let all_moves = game.get_all_moves();
 
-        let black_len = match &all_moves[11] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let black_len = debug::get_all_from_position(&all_moves, 11).len();
 
         assert_eq!(black_len, 2);
 
-        let white_len = match &all_moves[51] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let white_len = debug::get_all_from_position(&all_moves, 51).len();
 
         assert_eq!(white_len, 2);
     }
@@ -398,17 +390,11 @@ mod tests {
 
         let all_moves = game.get_all_moves();
 
-        let black_len = match &all_moves[11] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let black_len = debug::get_all_from_position(&all_moves, 11).len();
 
         assert_eq!(black_len, 4);
 
-        let white_len = match &all_moves[51] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let white_len = debug::get_all_from_position(&all_moves, 51).len();
 
         assert_eq!(white_len, 4);
     }
@@ -419,17 +405,11 @@ mod tests {
 
         let all_moves = game.get_all_moves();
 
-        let black_len = match &all_moves[11] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let black_len = debug::get_all_from_position(&all_moves, 11).len();
 
         assert_eq!(black_len, 2);
 
-        let white_len = match &all_moves[51] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let white_len = debug::get_all_from_position(&all_moves, 51).len();
 
         assert_eq!(white_len, 2);
     }
@@ -440,17 +420,11 @@ mod tests {
 
         let all_moves = game.get_all_moves();
 
-        let black_len = match &all_moves[19] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let black_len = debug::get_all_from_position(&all_moves, 19).len();
 
         assert_eq!(black_len, 3);
 
-        let white_len = match &all_moves[43] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let white_len = debug::get_all_from_position(&all_moves, 43).len();
 
         assert_eq!(white_len, 3);
     }
@@ -461,17 +435,11 @@ mod tests {
 
         let all_moves = game.get_all_moves();
 
-        let black_len = match &all_moves[19] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let black_len = debug::get_all_from_position(&all_moves, 19).len();
 
         assert_eq!(black_len, 1);
 
-        let white_len = match &all_moves[43] {
-            Some(x) => x.len(),
-            None => 0
-        };
+        let white_len = debug::get_all_from_position(&all_moves, 43).len();
 
         assert_eq!(white_len, 1);
     }
@@ -482,16 +450,17 @@ mod tests {
 
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[27].take().unwrap();
-        x.sort();
 
         let mut expected_moves = vec![
-            Standard(3, true), Standard(11, true), Standard(19, true),
-            Standard(35, true), Standard(43, true), Standard(51, true),
-            Standard(59, true), Standard(24, true), Standard(25, true),
-            Standard(26, true), Standard(28, true), Standard(29, true),
-            Standard(30, true), Standard(31, true),
+            Standard(27,3, true), Standard(27,11, true), Standard(27,19, true),
+            Standard(27,35, true), Standard(27,43, true), Standard(27,51, true),
+            Standard(27,59, true), Standard(27,24, true), Standard(27,25, true),
+            Standard(27,26, true), Standard(27,28, true), Standard(27,29, true),
+            Standard(27,30, true), Standard(27,31, true),
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 27);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -503,16 +472,16 @@ mod tests {
 
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[27].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            FutureMove(3, true), FutureMove(11, true), Standard(19, true),
-            Standard(35, true), Standard(43, true), FutureMove(51, true),
-            FutureMove(59, true), FutureMove(24, true), FutureMove(25, true),
-            Standard(26, true), Standard(28, true), Standard(29, true),
-            FutureMove(30, true), FutureMove(31, true)
+            FutureMove(27,3, true), FutureMove(27,11, true), Standard(27,19, true),
+            Standard(27,35, true), Standard(27,43, true), FutureMove(27,51, true),
+            FutureMove(27,59, true), FutureMove(27,24, true), FutureMove(27,25, true),
+            Standard(27,26, true), Standard(27,28, true), Standard(27,29, true),
+            FutureMove(27,30, true), FutureMove(27,31, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 27);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -524,15 +493,15 @@ mod tests {
 
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[27].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            FutureMove(11, true), Standard(19, true), Standard(35, true),
-            Standard(43, true), FutureMove(51, true), FutureMove(25, true),
-            Standard(26, true), Standard(28, true), Standard(29, true),
-            FutureMove(30, true)
+            FutureMove(27,11, true), Standard(27,19, true), Standard(27,35, true),
+            Standard(27,43, true), FutureMove(27,51, true), FutureMove(27,25, true),
+            Standard(27,26, true), Standard(27,28, true), Standard(27,29, true),
+            FutureMove(27,30, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 27);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -549,15 +518,15 @@ mod tests {
         let game = Game::new_from_string("8/8/8/8/8/8/8/R3K2R".to_string(), true);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[60].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(51, true), Standard(52, true), Standard(53, true),
-            Standard(59, true), Standard(61, true),
+            Standard(60,51, true), Standard(60,52, true), Standard(60,53, true),
+            Standard(60,59, true), Standard(60,61, true),
             Castle(56, 59, 60, 58, true),
             Castle(63, 61, 60, 62, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 60);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -569,14 +538,14 @@ mod tests {
         let game = Game::new_from_string("8/8/8/8/8/8/8/R3KN1R".to_string(), true);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[60].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(51, true), Standard(52, true), Standard(53, true),
-            Standard(59, true),
+            Standard(60,51, true), Standard(60,52, true), Standard(60,53, true),
+            Standard(60,59, true),
             Castle(56, 59, 60, 58, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 60);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -587,14 +556,14 @@ mod tests {
         let game = Game::new_from_string("8/8/8/8/8/8/8/R3Kn1R".to_string(), true);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[60].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(51, true), Standard(52, true), Standard(53, true),
-            Standard(59, true), Standard(61, true),
+            Standard(60,51, true), Standard(60,52, true), Standard(60,53, true),
+            Standard(60,59, true), Standard(60,61, true),
             Castle(56, 59, 60, 58, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 60);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -605,14 +574,14 @@ mod tests {
         let game = Game::new_from_string("8/8/8/8/8/8/8/RB2K2R".to_string(), true);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[60].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(51, true), Standard(52, true), Standard(53, true),
-            Standard(59, true), Standard(61, true),
+            Standard(60,51, true), Standard(60,52, true), Standard(60,53, true),
+            Standard(60,59, true), Standard(60,61, true),
             Castle(63, 61, 60, 62, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 60);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -623,14 +592,14 @@ mod tests {
         let game = Game::new_from_string("8/8/8/8/8/8/8/Rb2K2R".to_string(), true);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[60].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(51, true), Standard(52, true), Standard(53, true),
-            Standard(59, true), Standard(61, true),
+            Standard(60,51, true), Standard(60,52, true), Standard(60,53, true),
+            Standard(60,59, true), Standard(60,61, true),
             Castle(63, 61, 60, 62, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 60);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -641,14 +610,14 @@ mod tests {
         let game = Game::new_from_string("3r4/8/8/8/8/8/8/R3K2R".to_string(), true);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[60].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(51, true), Standard(52, true), Standard(53, true),
-            Standard(59, true), Standard(61, true),
+            Standard(60,51, true), Standard(60,52, true), Standard(60,53, true),
+            Standard(60,59, true), Standard(60,61, true),
             Castle(63, 61, 60, 62, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 60);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -659,15 +628,16 @@ mod tests {
         let game = Game::new_from_string("1r6/8/8/8/8/8/8/R3K2R".to_string(), true);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[60].take().unwrap();
-        x.sort();
 
         let mut expected_moves = vec![
-            Standard(51, true), Standard(52, true), Standard(53, true),
-            Standard(59, true), Standard(61, true),
+            Standard(60,51, true), Standard(60,52, true), Standard(60,53, true),
+            Standard(60,59, true), Standard(60,61, true),
             Castle(63, 61, 60, 62, true),
             Castle(56, 59, 60, 58, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 60);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -678,33 +648,32 @@ mod tests {
         let game = Game::new_from_string("8/4r3/8/8/8/8/8/R3K2R".to_string(), true);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[60].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(51, true), Standard(52, true), Standard(53, true),
-            Standard(59, true), Standard(61, true)
+            Standard(60,51, true), Standard(60,52, true), Standard(60,53, true),
+            Standard(60,59, true), Standard(60,61, true)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 60);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
     }
-
 
     #[test]
     fn test_castle_black() {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/8/8".to_string(), false);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[4].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(3, false), Standard(5, false), Standard(11, false),
-            Standard(12, false), Standard(13, false),
+            Standard(4, 3, false), Standard(4, 5, false), Standard(4, 11, false),
+            Standard(4, 12, false), Standard(4, 13, false),
             Castle(0, 3, 4, 2, false),
             Castle(7, 5, 4, 6, false)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 4);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -716,14 +685,14 @@ mod tests {
         let game = Game::new_from_string("r3kn1r/8/8/8/8/8/8/8".to_string(), false);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[4].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(3, false), Standard(11, false),
-            Standard(12, false), Standard(13, false),
+            Standard(4,3, false), Standard(4,11, false),
+            Standard(4,12, false), Standard(4,13, false),
             Castle(0, 3, 4, 2, false)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 4);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -734,14 +703,14 @@ mod tests {
         let game = Game::new_from_string("r3kN1r/8/8/8/8/8/8/8".to_string(), false);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[4].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(3, false), Standard(5, false), Standard(11, false),
-            Standard(12, false), Standard(13, false),
+            Standard(4,3, false), Standard(4,5, false), Standard(4,11, false),
+            Standard(4,12, false), Standard(4,13, false),
             Castle(0, 3, 4, 2, false)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 4);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -752,14 +721,14 @@ mod tests {
         let game = Game::new_from_string("rb2k2r/8/8/8/8/8/8/8".to_string(), false);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[4].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(3, false), Standard(5, false), Standard(11, false),
-            Standard(12, false), Standard(13, false),
+            Standard(4,3, false), Standard(4,5, false), Standard(4,11, false),
+            Standard(4,12, false), Standard(4,13, false),
             Castle(7, 5, 4, 6, false)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 4);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -770,14 +739,14 @@ mod tests {
         let game = Game::new_from_string("rB2k2r/8/8/8/8/8/8/8".to_string(), false);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[4].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(3, false), Standard(5, false), Standard(11, false),
-            Standard(12, false), Standard(13, false),
+            Standard(4,3, false), Standard(4,5, false), Standard(4,11, false),
+            Standard(4,12, false), Standard(4,13, false),
             Castle(7, 5, 4, 6, false)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 4);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -788,14 +757,14 @@ mod tests {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/8/3R4".to_string(), false);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[4].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(3, false), Standard(5, false), Standard(11, false),
-            Standard(12, false), Standard(13, false),
+            Standard(4,3, false), Standard(4,5, false), Standard(4,11, false),
+            Standard(4,12, false), Standard(4,13, false),
             Castle(7, 5, 4, 6, false)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 4);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -806,15 +775,15 @@ mod tests {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/8/1R6".to_string(), false);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[4].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(3, false), Standard(5, false), Standard(11, false),
-            Standard(12, false), Standard(13, false),
+            Standard(4,3, false), Standard(4,5, false), Standard(4,11, false),
+            Standard(4,12, false), Standard(4,13, false),
             Castle(7, 5, 4, 6, false),
             Castle(0, 3, 4, 2, false)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 4);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -825,13 +794,13 @@ mod tests {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/4R3/8".to_string(), false);
         let mut all_moves = game.get_all_moves();
 
-        let mut x = all_moves[4].take().unwrap();
-        x.sort();
-
         let mut expected_moves = vec![
-            Standard(3, false), Standard(5, false), Standard(11, false),
-            Standard(12, false), Standard(13, false)
+            Standard(4,3, false), Standard(4,5, false), Standard(4,11, false),
+            Standard(4,12, false), Standard(4,13, false)
         ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 4);
+        x.sort();
         expected_moves.sort();
 
         assert_eq!(x, expected_moves);
@@ -844,7 +813,7 @@ mod tests {
 
         assert_eq!(game.board.board_value, 134_217_728);
 
-        let moved = game.make_move(&all_moves,27, 3);
+        let moved = game.make_move(&debug::find_specific_move(&all_moves, 27, 3));
 
         assert_eq!(moved, true);
 
@@ -864,7 +833,7 @@ mod tests {
 
         assert_eq!(game.board.board_value, 1_224_979_098_644_774_912);
 
-        let moved = game.make_move(&all_moves,60, 58);
+        let moved = game.make_move(&debug::find_specific_move(&all_moves, 60, 58));
 
         assert_eq!(moved, true);
 
@@ -883,7 +852,380 @@ mod tests {
         assert_eq!(game.board.board_value, 864_691_128_455_135_232);
     }
 
+    #[test]
+    fn test_move_bishop() {
+        let mut game = Game::new_from_string("8/8/3B4/8/8/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
 
+        let mut expected_moves = vec![
+            Standard(19,10, true), Standard(19,1, true),
+            Standard(19,12, true), Standard(19,5, true),
+            Standard(19,28, true), Standard(19,37, true),
+            Standard(19,46, true), Standard(19,55, true),
+            Standard(19,26, true), Standard(19,33, true),
+            Standard(19,40, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 19);
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+
+    #[test]
+    fn test_move_bishop2() {
+        let mut game = Game::new_from_string("8/8/8/8/6B1/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 38;
+
+        let mut expected_moves = vec![
+            Standard(indeks,31, true), Standard(indeks,47, true),
+            Standard(indeks,29, true), Standard(indeks,20, true),
+            Standard(indeks,11, true), Standard(indeks,2, true),
+            Standard(indeks,45, true), Standard(indeks,52, true),
+            Standard(indeks,59, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_bishop_top_left_corner() {
+        let mut game = Game::new_from_string("B7/8/8/8/8/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let mut expected_moves = vec![
+            Standard(0,9, true), Standard(0,18, true),
+            Standard(0,27, true), Standard(0,36, true),
+            Standard(0,45, true), Standard(0,54, true),
+            Standard(0,63, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 0);
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_bishop_top_right_corner() {
+        let mut game = Game::new_from_string("7B/8/8/8/8/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let mut expected_moves = vec![
+            Standard(7,14, true), Standard(7,21, true),
+            Standard(7,28, true), Standard(7,35, true),
+            Standard(7,42, true), Standard(7,49, true),
+            Standard(7,56, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 7);
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+
+    #[test]
+    fn test_move_bishop_low_right_corner() {
+        let mut game = Game::new_from_string("8/8/8/8/8/8/8/7B".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let mut expected_moves = vec![
+            Standard(63,9, true), Standard(63,18, true),
+            Standard(63,27, true), Standard(63,36, true),
+            Standard(63,45, true), Standard(63,54, true),
+            Standard(63,0, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 63);
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+
+    #[test]
+    fn test_move_bishop_low_left_corner() {
+        let mut game = Game::new_from_string("8/8/8/8/8/8/8/B7".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let mut expected_moves = vec![
+            Standard(56,14, true), Standard(56,21, true),
+            Standard(56,28, true), Standard(56,35, true),
+            Standard(56,42, true), Standard(56,49, true),
+            Standard(56,7, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, 56);
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+
+    #[test]
+    fn test_move_knight() {
+        let mut game = Game::new_from_string("8/8/8/8/4N3/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 36;
+
+        let mut expected_moves = vec![
+            Standard(indeks,19, true), Standard(indeks,21, true),
+            Standard(indeks,26, true), Standard(indeks,30, true),
+            Standard(indeks,42, true), Standard(indeks,46, true),
+            Standard(indeks,51, true), Standard(indeks,53, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_knight2() {
+        let mut game = Game::new_from_string("8/N7/8/8/8/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 8;
+
+        let mut expected_moves = vec![
+            Standard(indeks,2, true), Standard(indeks,18, true),
+            Standard(indeks,25, true)
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_knight3() {
+        let mut game = Game::new_from_string("8/8/8/N7/8/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 24;
+
+        let mut expected_moves = vec![
+            Standard(indeks,18, true), Standard(indeks,34, true),
+            Standard(indeks,41, true), Standard(indeks,9, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_knight4() {
+        let mut game = Game::new_from_string("8/8/8/8/1N6/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 33;
+
+        let mut expected_moves = vec![
+            Standard(indeks,16, true), Standard(indeks,18, true),
+            Standard(indeks,27, true), Standard(indeks,43, true),
+            Standard(indeks,48, true), Standard(indeks,50, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_knight5() {
+        let mut game = Game::new_from_string("8/8/8/7N/8/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 31;
+
+        let mut expected_moves = vec![
+            Standard(indeks,14, true), Standard(indeks,21, true),
+            Standard(indeks,37, true), Standard(indeks,46, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_knight6() {
+        let mut game = Game::new_from_string("8/8/8/8/6N1/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 38;
+
+        let mut expected_moves = vec![
+            Standard(indeks,21, true), Standard(indeks,23, true),
+            Standard(indeks,28, true), Standard(indeks,44, true),
+            Standard(indeks,53, true), Standard(indeks,55, true),
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_knight_top_left_corner() {
+        let mut game = Game::new_from_string("N7/8/8/8/8/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 0;
+
+        let mut expected_moves = vec![
+            Standard(indeks,10, true), Standard(indeks,17, true)
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_knight_top_right_corner() {
+        let mut game = Game::new_from_string("7N/8/8/8/8/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 7;
+
+        let mut expected_moves = vec![
+            Standard(indeks,13, true), Standard(indeks,22, true)
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_knight_bottom_left_corner() {
+        let mut game = Game::new_from_string("8/8/8/8/8/8/8/N7".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 56;
+
+        let mut expected_moves = vec![
+            Standard(indeks,41, true), Standard(indeks,50, true)
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_knight_bottom_right_corner() {
+        let mut game = Game::new_from_string("8/8/8/8/8/8/8/7N".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 63;
+
+        let mut expected_moves = vec![
+            Standard(indeks,46, true), Standard(indeks,53, true)
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_queen() {
+        let mut game = Game::new_from_string("8/8/8/3Q4/8/8/8/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 27;
+
+        let mut expected_moves = vec![
+            Standard(indeks,18, true), Standard(indeks,9, true),
+            Standard(indeks,0, true), Standard(indeks,36, true),
+            Standard(indeks,45, true), Standard(indeks,54, true),
+            Standard(indeks,63, true), Standard(indeks,20, true),
+            Standard(indeks,13, true), Standard(indeks,6, true),
+            Standard(indeks,34, true), Standard(indeks,41, true),
+            Standard(indeks,48, true),
+            Standard(indeks,19, true), Standard(indeks,11, true),
+            Standard(indeks,3, true), Standard(indeks,35, true),
+            Standard(indeks,43, true), Standard(indeks,51, true),
+            Standard(indeks,59, true), Standard(indeks,26, true),
+            Standard(indeks,25, true), Standard(indeks,24, true),
+            Standard(indeks,28, true), Standard(indeks,29, true),
+            Standard(indeks,30, true), Standard(indeks,31, true),
+
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
+
+    #[test]
+    fn test_move_queen2() {
+        let mut game = Game::new_from_string("8/8/8/8/8/8/Q7/8".to_string(), true);
+        let mut all_moves = game.get_all_moves();
+
+        let indeks = 48;
+
+        let mut expected_moves = vec![
+            Standard(indeks,56, true), Standard(indeks,40, true),
+            Standard(indeks,32, true), Standard(indeks,24, true),
+            Standard(indeks,16, true), Standard(indeks,8, true),
+            Standard(indeks,0, true), Standard(indeks,49, true),
+            Standard(indeks,50, true), Standard(indeks,51, true),
+            Standard(indeks,52, true), Standard(indeks,53, true),
+            Standard(indeks,54, true), Standard(indeks,55, true),
+
+            Standard(indeks,57, true), Standard(indeks,41, true),
+            Standard(indeks,34, true), Standard(indeks,27, true),
+            Standard(indeks,20, true), Standard(indeks,13, true),
+            Standard(indeks,6, true)
+
+        ];
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(indeks));
+        x.sort();
+        expected_moves.sort();
+
+        assert_eq!(x, expected_moves);
+    }
 
     //#[test]
     /*fn hash_performance_test() {
@@ -916,9 +1258,9 @@ mod tests {
         for (i, x) in hash.iter().enumerate() {
             assert_eq!(*x, hash2[i])
         }
-    }*/
+    }
 
-    /*#[test]
+    #[test]
     fn make_move_performance_test() {
 
         let games = debug_structs::generate_games(1_000_000);

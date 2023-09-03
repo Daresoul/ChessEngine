@@ -4,9 +4,10 @@ pub mod game {
     use crate::board::board::{Board, MoveType};
     use crate::board::board::MoveType::{Castle, Standard};
     use crate::debug_structs::debug_structs;
-    use crate::piece::piece::Piece;
+    use crate::piece::piece::{Piece, PieceType};
     use crate::piece::piece::PieceType::{Bishop, King, Knight, Pawn, Queen, Rook};
 
+    #[derive(Clone)]
     pub struct Game {
         pub board: Board,
         pub is_white_turn: bool,
@@ -94,54 +95,49 @@ pub mod game {
             board
         }
 
-        pub fn check_attack_castle_white(&self, moves: &[Option<Vec<MoveType>>; 64]) -> (bool, bool) {
+        pub fn check_attack_castle_white(&self, moves: &Vec<MoveType>) -> (bool, bool) {
             let mut can_castle_left = true;
             let mut can_castle_right = true;
-            for i in 0..64 {
-                match &moves[i] {
-                    Some(moves) => {
-                        for single_move in moves.iter() {
-                            match single_move {
-                                Standard(to, color) => {
-                                    if !*color {
-                                        if *to == 60 {
-                                            can_castle_left = false;
-                                            can_castle_right = false;
-                                            break;
-                                        }
-                                        if *to == 58 || *to == 59 {
-                                            can_castle_left = false;
-                                        } else if *to == 61 || *to == 62 {
-                                            can_castle_right = false;
-                                        }
-                                    }
-                                },
-                                MoveType::Promotion(to, _, color) => {
-                                    if !*color {
-                                        if *to == 60 {
-                                            can_castle_left = false;
-                                            can_castle_right = false;
-                                            break;
-                                        }
-                                        if *to == 58 || *to == 59 {
-                                            can_castle_left = false;
-                                        } else if *to == 61 || *to == 62 {
-                                            can_castle_right = false;
-                                        }
-                                    }
-                                },
-                                _ => continue
+
+
+            for single_move in moves.iter() {
+                match single_move {
+                    Standard(from, to, color) => {
+                        if !*color {
+                            if *to == 60 {
+                                can_castle_left = false;
+                                can_castle_right = false;
+                                break;
+                            }
+                            if *to == 58 || *to == 59 {
+                                can_castle_left = false;
+                            } else if *to == 61 || *to == 62 {
+                                can_castle_right = false;
                             }
                         }
                     },
-                    None => continue
+                    MoveType::Promotion(from, to, _, color) => {
+                        if !*color {
+                            if *to == 60 {
+                                can_castle_left = false;
+                                can_castle_right = false;
+                                break;
+                            }
+                            if *to == 58 || *to == 59 {
+                                can_castle_left = false;
+                            } else if *to == 61 || *to == 62 {
+                                can_castle_right = false;
+                            }
+                        }
+                    },
+                    _ => continue
                 }
             }
 
             (can_castle_left,can_castle_right)
         }
 
-        pub fn castle_white(&self, all_moves: &[Option<Vec<MoveType>>; 64]) -> Vec<MoveType> {
+        pub fn castle_white(&self, all_moves: &Vec<MoveType>) -> Vec<MoveType> {
             let mut moves = vec![];
 
 
@@ -166,54 +162,48 @@ pub mod game {
             moves
         }
 
-        pub fn check_attack_castle_black(&self, moves: &[Option<Vec<MoveType>>; 64]) -> (bool, bool) {
+        pub fn check_attack_castle_black(&self, moves: &Vec<MoveType>) -> (bool, bool) {
             let mut can_castle_left = true;
             let mut can_castle_right = true;
-            for i in 0..64 {
-                match &moves[i] {
-                    Some(moves) => {
-                        for single_move in moves.iter() {
-                            match single_move {
-                                Standard(to, color) => {
-                                    if *color {
-                                        if *to == 4 {
-                                            can_castle_left = false;
-                                            can_castle_right = false;
-                                            break;
-                                        }
-                                        if *to == 2 || *to == 3 {
-                                            can_castle_left = false;
-                                        } else if *to == 5 || *to == 6 {
-                                            can_castle_right = false;
-                                        }
-                                    }
-                                },
-                                MoveType::Promotion(to, _, color) => {
-                                    if *color {
-                                        if *to == 4 {
-                                            can_castle_left = false;
-                                            can_castle_right = false;
-                                            break;
-                                        }
-                                        if *to == 2 || *to == 3 {
-                                            can_castle_left = false;
-                                        } else if *to == 5 || *to == 6 {
-                                            can_castle_right = false;
-                                        }
-                                    }
-                                },
-                                _ => continue
+
+            for single_move in moves.iter() {
+                match single_move {
+                    Standard(from, to, color) => {
+                        if *color {
+                            if *to == 4 {
+                                can_castle_left = false;
+                                can_castle_right = false;
+                                break;
+                            }
+                            if *to == 2 || *to == 3 {
+                                can_castle_left = false;
+                            } else if *to == 5 || *to == 6 {
+                                can_castle_right = false;
                             }
                         }
                     },
-                    None => continue
+                    MoveType::Promotion(from, to, _, color) => {
+                        if *color {
+                            if *to == 4 {
+                                can_castle_left = false;
+                                can_castle_right = false;
+                                break;
+                            }
+                            if *to == 2 || *to == 3 {
+                                can_castle_left = false;
+                            } else if *to == 5 || *to == 6 {
+                                can_castle_right = false;
+                            }
+                        }
+                    },
+                    _ => continue
                 }
             }
 
             (can_castle_left,can_castle_right)
         }
 
-        pub fn castle_black(&self, all_moves: &[Option<Vec<MoveType>>; 64]) -> Vec<MoveType> {
+        pub fn  castle_black(&self, all_moves: &Vec<MoveType>) -> Vec<MoveType> {
             let mut moves = vec![];
 
 
@@ -238,13 +228,14 @@ pub mod game {
             moves
         }
 
-        pub fn get_all_moves(&self) -> [Option<Vec<MoveType>>; 64] {
-            let mut moves: [Option<Vec<MoveType>>; 64] = debug_structs::get_empty_move_board();
+        pub fn get_all_moves(&self) -> Vec<MoveType> {
+            let mut moves: Vec<MoveType> = vec![];
+            moves.reserve(500);
+
             for i in 0..64 {
                 match self.board.board_state[i] {
                     Some(piece) => {
-                        let piece_moves = piece.get_moves(&self.board, &(i as u8));
-                        moves[i] = Some(piece_moves);
+                        moves.append( &mut piece.get_moves(&self.board, &(i as u8)));
                     },
                     None => ()
                 }
@@ -252,70 +243,54 @@ pub mod game {
 
             // check for castelling
             if self.is_white_turn {
-                let mut white_castle = self.castle_white(&moves);
-                if white_castle.len() > 0 {
-                    let white_king_position = moves.get_mut(60);
-                    match white_king_position {
-                        Some(x) =>
-                            match x {
-                                Some(y) => y.append(&mut white_castle),
-                                None => ()
-                            },
-                        None => ()
-                    }
+                match self.board.board_state[60] {
+                    Some(piece) => {
+                        if piece.piece_type == King && piece.is_white == true {
+                            let mut white_castle = self.castle_white(&moves);
+                            if white_castle.len() > 0 {
+                                moves.append(&mut white_castle);
+                            }
+                        }
+                    },
+                    None => ()
                 }
             } else {
-                let mut black_castle = self.castle_black(&moves);
-                if black_castle.len() > 0 {
-                    let black_king_position = moves.get_mut(4);
-                    match black_king_position {
-                        Some(x) =>
-                            match x {
-                                Some(y) => y.append(&mut black_castle),
-                                None => ()
-                            },
-                        None => ()
-                    }
+                match self.board.board_state[4] {
+                    Some(piece) => {
+                        if piece.piece_type == King && piece.is_white == false {
+                            let mut black_castle = self.castle_black(&moves);
+                            if black_castle.len() > 0 {
+                                moves.append(&mut black_castle);
+                            }
+                        }
+                    },
+                    None => ()
                 }
             }
             moves
         }
 
-        pub fn make_move(&mut self, moves: &[Option<Vec<MoveType>>; 64], index: usize, to: usize) -> bool {
+        pub fn make_move(&mut self, chosen_move: &MoveType) -> bool {
 
-            let postion = moves.get(index).unwrap();
-
-            match postion {
-                Some(x) => {
-                    for single_move in x.iter() {
-                        match single_move {
-                            Standard(move_type_to, _) => {
-                                if usize::from(*move_type_to) == to {
-                                    self.board.make_move(index, usize::from(to));
-                                    self.is_white_turn = !self.is_white_turn;
-                                    return true;
-                                }
-                            },
-                            MoveType::Promotion(_to, _piece, _) => {
-                                panic!("Promotion???");
-                            },
-                            Castle(rook_from, rook_to, king_from, king_to, _) => {
-                                if usize::from(*king_to) == to {
-                                    self.board.make_move(usize::from(*rook_from), usize::from(*rook_to));
-                                    self.board.make_move(usize::from(*king_from), usize::from(*king_to));
-                                    self.is_white_turn = !self.is_white_turn;
-                                    return true;
-                                }
-                            },
-                            _ => ()
-                        }
-                    }
+            match chosen_move {
+                Standard(from, to, color) => {
+                    self.board.make_move(usize::from(*from), usize::from(*to));
+                    return true;
                 },
-                None => ()
+                MoveType::FutureMove(from, to, color) => {
+                    panic!("Dont do future movedvdslkfgsdæljfkgædsj");
+                },
+                MoveType::Promotion(from, to, piece, color) => {
+                    self.board.make_move(usize::from(*from), usize::from(*to));
+                    self.board.board_state[usize::from(*to)] = Some(*piece);
+                    return true;
+                },
+                Castle(king_from, king_to, rook_from, rook_to, color) => {
+                    self.board.make_move(usize::from(*king_from), usize::from(*king_to));
+                    self.board.make_move(usize::from(*rook_from), usize::from(*rook_to));
+                    return true;
+                }
             }
-
-
-            false
         }
 
     }
