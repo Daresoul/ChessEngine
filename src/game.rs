@@ -255,14 +255,20 @@ pub mod game {
             moves
         }
 
-        pub fn get_all_moves(&self) -> Vec<MoveType> {
+        pub fn get_all_moves(&self) -> (Vec<MoveType>, Vec<MoveType>) {
             let mut moves: Vec<MoveType> = vec![];
+            let mut defence: Vec<MoveType> = vec![];
             moves.reserve(500);
+            defence.reserve(100);
+
 
             for i in 0..64 {
                 match self.board.board_state[i] {
                     Some(piece) => {
-                        moves.append( &mut piece.get_moves(&self.board, &(i as u8)));
+                        let (mut piece_moves, mut piece_defense_moves) =
+                            piece.get_moves(&self.board, &(i as u8));
+                        moves.append( &mut piece_moves);
+                        defence.append( &mut piece_defense_moves);
                     },
                     None => ()
                 }
@@ -294,10 +300,10 @@ pub mod game {
                     None => ()
                 }
             }
-            moves
+            (moves, defence)
         }
 
-        pub fn evaluate_board(&self, moves: &Vec<MoveType>) -> i32 {
+        pub fn evaluate_board(&self, moves: &Vec<MoveType>, defence: &Vec<MoveType>) -> i32 {
             let mut score: i32 = 0;
             for i in 0..64 {
                 match self.board.board_state[i] {
@@ -337,16 +343,28 @@ pub mod game {
                             }
                         }
                     },
-                    Capture(_p, _from, _to, cp, color) => {
-                            if *color {
-                                score += i32::from((*cp).get_value() / 2);
-                            } else {
-                                score -= i32::from((*cp).get_value() / 2);
-                            }
-                    },
-                    Defend(_p, _from, _to, _d, _color) => {
+                    Capture(p, cfrom, cto, cp, color) => {
+                        let mut count = 0;
+                        for d in defence {
+                            match d {
+                                Defend(_p, dfrom, dto, _d, _color) => {
+                                    if cto == dfrom {
+                                        count += 1;
+                                    }
+                                },
+                                _ => ()
 
-                    },
+                            }
+                        }
+
+                        if count > 0 {
+                            if *color {
+                                score += i32::abs(i32::from((*p).get_value()) - i32::from((*cp).get_value()));
+                            } else {
+                                score -= i32::abs(i32::from((*p).get_value()) - i32::from((*cp).get_value()));
+                            }
+                        }
+                    }
                     _ => ()
                 }
             }
