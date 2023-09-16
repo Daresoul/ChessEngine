@@ -101,8 +101,8 @@ pub mod game {
 
             for single_move in moves.iter() {
                 match single_move {
-                    Standard(_from, to, color) => {
-                        if !*color {
+                    Attack(_, _from, to, can_move, color) => {
+                        if !*color && *can_move {
                             if *to == 60 {
                                 can_castle_left = false;
                                 can_castle_right = false;
@@ -129,6 +129,20 @@ pub mod game {
                             }
                         }
                     },
+                    Capture(_, from, to, cp, color) => {
+                        if !*color {
+                            if *to == 60 {
+                                can_castle_left = false;
+                                can_castle_right = false;
+                                break;
+                            }
+                            if *to == 58 || *to == 59 {
+                                can_castle_left = false;
+                            } else if *to == 61 || *to == 62 {
+                                can_castle_right = false;
+                            }
+                        }
+                    }
                     _ => continue
                 }
             }
@@ -167,8 +181,8 @@ pub mod game {
 
             for single_move in moves.iter() {
                 match single_move {
-                    Standard(_from, to, color) => {
-                        if *color {
+                    Attack(_, _from, to, can_move, color) => {
+                        if *color && *can_move {
                             if *to == 4 {
                                 can_castle_left = false;
                                 can_castle_right = false;
@@ -195,6 +209,20 @@ pub mod game {
                             }
                         }
                     },
+                    Capture(_, from, to, cp, color) => {
+                        if *color {
+                            if *to == 4 {
+                                can_castle_left = false;
+                                can_castle_right = false;
+                                break;
+                            }
+                            if *to == 2 || *to == 3 {
+                                can_castle_left = false;
+                            } else if *to == 5 || *to == 6 {
+                                can_castle_right = false;
+                            }
+                        }
+                    }
                     _ => continue
                 }
             }

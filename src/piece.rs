@@ -1,5 +1,6 @@
 pub mod piece {
     use std::fmt;
+    use std::path::is_separator;
     use crate::board::board::Board;
     use crate::board::board::MoveType;
     use crate::piece::piece::PieceType::{Bishop, King, Knight, Pawn, Queen, Rook};
@@ -138,8 +139,8 @@ pub mod piece {
         pub fn get_moves(&self, board: &Board, index: &u8) -> Vec<MoveType> {
             match self.piece_type {
                 Pawn => self.pawn_moves(board, index),
-                Rook => self.rook_moves(board, index),
-                Bishop => self.bishop_moves(board, index),
+                Rook => self.rook_moves(board, index, Rook),
+                Bishop => self.bishop_moves(board, index, Bishop),
                 King => self.king_moves(board, index),
                 Knight => self.knight_moves(board, index),
                 Queen => self.queen_moves(board, index)
@@ -162,12 +163,16 @@ pub mod piece {
                 }
             }
 
+
+            let should_check_left = if self.is_white {*index % 8 != 0} else {*index % 8 != 7};
+            let should_check_right = if self.is_white {*index % 8 != 7} else {*index % 8 != 0};
+
             // Move diagonal left
-            let diagonal_left = if self.is_white {index.checked_sub(9)} else {index.checked_add(7)};
-            match diagonal_left {
-                None => (),
-                Some(move_val) => {
-                    if move_val % 8 != 0 {
+            if should_check_left {
+                let diagonal_left = if self.is_white { index.checked_sub(9) } else { index.checked_add(9) };
+                match diagonal_left {
+                    None => (),
+                    Some(move_val) => {
                         if Board::get_board_state_from_position(board, &move_val) {
                             match board.board_state[usize::from(move_val)] {
                                 Some(piece) => {
@@ -189,26 +194,29 @@ pub mod piece {
             }
 
             // Move diagonal right
-            let diagonal_right = if self.is_white {index.checked_sub(7)} else {index.checked_add(9)};
-            match diagonal_right {
-                None => (),
-                Some(move_value) => {
-                    if *index % 8 != 7 {
-                        if Board::get_board_state_from_position(board, &move_value) {
-                            match board.board_state[usize::from(move_value)] {
-                                Some(piece) => {
-                                    if piece.is_white != self.is_white && move_value < 64 {
-                                        moves.push(MoveType::Attack(Pawn, *index, move_value, true, self.is_white));
-                                    } else {
-                                        if move_value < 64 {
-                                            moves.push(MoveType::Defend(Pawn, *index, move_value, piece.piece_type, self.is_white));
+            if should_check_right {
+                let diagonal_right = if self.is_white { index.checked_sub(7) } else { index.checked_add(7) };
+                match diagonal_right {
+                    None => (),
+                    Some(move_value) => {
+                        let is_on_edge = if !self.is_white { *index % 8 != 0 } else { *index % 8 != 7 };
+                        if is_on_edge {
+                            if Board::get_board_state_from_position(board, &move_value) {
+                                match board.board_state[usize::from(move_value)] {
+                                    Some(piece) => {
+                                        if piece.is_white != self.is_white && move_value < 64 {
+                                            moves.push(MoveType::Attack(Pawn, *index, move_value, true, self.is_white));
+                                        } else {
+                                            if move_value < 64 {
+                                                moves.push(MoveType::Defend(Pawn, *index, move_value, piece.piece_type, self.is_white));
+                                            }
                                         }
-                                    }
-                                },
-                                None => panic!("Should never happen")
+                                    },
+                                    None => panic!("Should never happen")
+                                }
+                            } else {
+                                moves.push(MoveType::Attack(Pawn, *index, move_value, false, self.is_white));
                             }
-                        } else {
-                            moves.push(MoveType::Attack(Pawn, *index, move_value, false, self.is_white));
                         }
                     }
                 }
@@ -265,7 +273,7 @@ pub mod piece {
             }
         }
 
-        pub fn rook_moves(&self, board: &Board, index: &u8) -> Vec<MoveType> {
+        pub fn rook_moves(&self, board: &Board, index: &u8, piece_type: PieceType) -> Vec<MoveType> {
             let mut moves: Vec<MoveType> = vec![];
 
             // Counts are for option types
@@ -280,7 +288,7 @@ pub mod piece {
                     match up {
                         Some(up_index) => {
                             let (added, rook_up_move) =
-                                self.rook_move(board, *index, up_index, &count_up, Rook);
+                                self.rook_move(board, *index, up_index, &count_up, piece_type);
                             count_up += added;
                             match rook_up_move {
                                 Some(move_type) => moves.push(move_type),
@@ -300,7 +308,7 @@ pub mod piece {
                             }
                             else {
                                 let (added, rook_down_move) =
-                                    self.rook_move(board, *index, down_index, &count_down, Rook);
+                                    self.rook_move(board, *index, down_index, &count_down, piece_type);
                                 count_down += added;
                                 match rook_down_move {
                                     Some(move_type) => moves.push(move_type),
@@ -322,7 +330,7 @@ pub mod piece {
                             }
                             else{
                                 let (added, rook_right_move) =
-                                    self.rook_move(board, *index, right_index, &count_right, Rook);
+                                    self.rook_move(board, *index, right_index, &count_right, piece_type);
                                 count_right += added;
                                 match rook_right_move {
                                     Some(move_type) => moves.push(move_type),
@@ -343,7 +351,7 @@ pub mod piece {
                                 count_left = 2;
                             } else {
                                 let (added, rook_left_move) =
-                                    self.rook_move(board, *index, left_index, &count_left, Rook);
+                                    self.rook_move(board, *index, left_index, &count_left, piece_type);
                                 count_left += added;
                                 match rook_left_move {
                                     Some(move_type) => moves.push(move_type),
@@ -415,22 +423,22 @@ pub mod piece {
             moves
         }
 
-        fn bishop_move(&self, board: &Board, from: u8, index: u8, count: &u8) -> (u8, Option<MoveType>) {
+        fn bishop_move(&self, board: &Board, from: u8, index: u8, count: &u8, piece_type: PieceType) -> (u8, Option<MoveType>) {
             if Board::get_board_state_from_position(board, &index) {
                 match board.board_state[usize::from(index)] {
                     Some(piece) => {
                         if piece.is_white != self.is_white {
                             let bishop_move =
                                 if *count == 0 {
-                                    MoveType::Capture(Bishop, from,index, piece.piece_type,self.is_white)
+                                    MoveType::Capture(piece_type, from,index, piece.piece_type,self.is_white)
                                 } else {
-                                    MoveType::FutureMove(Bishop, from,index, self.is_white)
+                                    MoveType::FutureMove(piece_type, from,index, self.is_white)
                                 };
                             return (*count + 1, Some(bishop_move))
                         }
                         else {
                             if *count == 0 {
-                                return (2, Some(MoveType::Defend(Bishop, from,index, piece.piece_type,self.is_white)))
+                                return (2, Some(MoveType::Defend(piece_type, from,index, piece.piece_type,self.is_white)))
                             }
                             return (2, None)
                         }
@@ -440,15 +448,15 @@ pub mod piece {
             } else {
                 let bishop_move =
                     if *count == 0 {
-                        MoveType::Attack(Bishop, from,index, true,self.is_white)
+                        MoveType::Attack(piece_type, from,index, true,self.is_white)
                     } else {
-                        MoveType::FutureMove(Bishop,from,index, self.is_white)
+                        MoveType::FutureMove(piece_type,from,index, self.is_white)
                     };
                 return (0, Some(bishop_move))
             }
         }
 
-        pub fn bishop_moves(&self, board: &Board, index: &u8) -> Vec<MoveType> {
+        pub fn bishop_moves(&self, board: &Board, index: &u8, piece_type: PieceType) -> Vec<MoveType> {
             let mut moves = vec![];
 
             let mut diagonal_up_right = 0;
@@ -464,7 +472,7 @@ pub mod piece {
                             if up_index % 8 == 0 {
                                 diagonal_up_right = 2;
                             } else {
-                                let (added, bishop_up_right_move) = self.bishop_move(board, *index, up_index, &diagonal_up_right);
+                                let (added, bishop_up_right_move) = self.bishop_move(board, *index, up_index, &diagonal_up_right, piece_type);
                                 diagonal_up_right += added;
                                 match bishop_up_right_move {
                                     Some(move_type) => moves.push(move_type),
@@ -483,7 +491,7 @@ pub mod piece {
                             if up_index % 8 == 7 {
                                 diagonal_up_left = 2;
                             } else {
-                                let (added, bishop_up_left_move) = self.bishop_move(board, *index, up_index, &diagonal_up_left);
+                                let (added, bishop_up_left_move) = self.bishop_move(board, *index, up_index, &diagonal_up_left, piece_type);
                                 diagonal_up_left += added;
                                 match bishop_up_left_move {
                                     Some(move_type) => moves.push(move_type),
@@ -505,7 +513,7 @@ pub mod piece {
                             } else if down_index % 8 == 0 {
                                 diagonal_down_right = 2;
                             } else {
-                                let (added, bishop_down_right_move) = self.bishop_move(board, *index, down_index, &diagonal_down_right);
+                                let (added, bishop_down_right_move) = self.bishop_move(board, *index, down_index, &diagonal_down_right, piece_type);
                                 diagonal_down_right += added;
                                 match bishop_down_right_move {
                                     Some(move_type) => moves.push(move_type),
@@ -526,7 +534,7 @@ pub mod piece {
                             } else if down_index % 8 == 7 {
                                 diagonal_down_left = 2;
                             } else {
-                                let (added, bishop_down_left_move) = self.bishop_move(board, *index, down_index, &diagonal_down_left);
+                                let (added, bishop_down_left_move) = self.bishop_move(board, *index, down_index, &diagonal_down_left, piece_type);
                                 diagonal_down_left += added;
                                 match bishop_down_left_move {
                                     Some(move_type) => moves.push(move_type),
@@ -628,8 +636,8 @@ pub mod piece {
         }
 
         pub fn queen_moves(&self, board: &Board, index: &u8) -> Vec<MoveType> {
-            let mut moves: Vec<MoveType> = self.bishop_moves(board, index);
-            moves.append(&mut self.rook_moves(board, index));
+            let mut moves: Vec<MoveType> = self.bishop_moves(board, index, Queen);
+            moves.append(&mut self.rook_moves(board, index, Queen));
 
             moves
         }

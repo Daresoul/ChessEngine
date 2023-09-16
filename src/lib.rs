@@ -85,11 +85,12 @@ piece as otherwise that piece wont be in the move list.
 mod tests {
     use crate::piece::piece::PieceType::{King, Rook, Bishop, Knight, Pawn, Queen};
     use crate::game::game::{Game};
-    use crate::board::board::{Board};
+    use crate::board::board::{Board, MoveType};
     use crate::piece::piece::{Piece};
     use crate::board::board::MoveType::{Castle, FutureMove, Attack, Capture, Standard, Defend};
     use crate::debug::debug;
     use crate::debug_structs::debug_structs;
+
 
     #[test]
     fn test_board_value_one_piece_start() {
@@ -263,7 +264,7 @@ mod tests {
     fn king_move() {
         let game = Game::new_from_string("8/8/8/3K4/8/8/8/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,27, 18, true, true), Attack(King,27, 19, true, true),
@@ -276,14 +277,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn king_move_top_right_corner() {
         let game = Game::new_from_string("7K/8/8/8/8/8/8/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,7,6, true,true),
@@ -295,14 +296,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn king_move_bottom_right_corner() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/7K".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,63, 54, true,true), Attack(King,63, 55, true,true), Attack(King,63, 62, true,true),
@@ -312,14 +313,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn king_move_bottom_left_corner() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/K7".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,56,48, true,true), Attack(King,56,49, true,true), Attack(King,56,57, true,true),
@@ -329,14 +330,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn king_move_top_left_corner() {
         let game = Game::new_from_string("K7/8/8/8/8/8/8/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,0,1, true,true),
@@ -348,30 +349,29 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn king_move_cant_take() {
         let game = Game::new_from_string("8/8/2PPP3/2PKP3/2PPP3/8/8/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
-        let mut expected_moves = vec![
-        ];
+        let mut expected_moves: Vec<MoveType> = vec![];
 
         let mut x = debug::get_all_from_position(&all_moves, 27);
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn king_move_take() {
         let game = Game::new_from_string("8/8/2ppp3/2pKp3/2ppp3/8/8/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Capture(King,27,18, Pawn,true),
@@ -388,14 +388,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn pawn_move_single_double_white() {
         let game = Game::new_from_string("8/3p4/8/8/8/8/3P4/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let index = 51;
 
@@ -416,7 +416,7 @@ mod tests {
     fn pawn_move_single_double_black() {
         let game = Game::new_from_string("8/3p4/8/8/8/8/3P4/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let index = 11;
 
@@ -432,7 +432,7 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
@@ -470,7 +470,7 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
@@ -492,7 +492,7 @@ mod tests {
 
         x.sort();
         expected_moves.sort();
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
 
 
         let index = 11;
@@ -509,7 +509,7 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
@@ -530,7 +530,7 @@ mod tests {
 
         x.sort();
         expected_moves.sort();
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
 
 
         let index = 19;
@@ -546,7 +546,7 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
@@ -567,7 +567,7 @@ mod tests {
 
         x.sort();
         expected_moves.sort();
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
 
 
         let index = 19;
@@ -583,12 +583,12 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
-    fn pawn_cant_attack_outside_board_white() {
-        let game = Game::new_from_string("8/8/8/8/8/P6P/8/8".to_string(), true);
+    fn pawn_cant_attack_outside_board_white_left() {
+        let game = Game::new_from_string("8/8/8/8/8/P7/8/8".to_string(), true);
 
         let all_moves = game.get_all_moves();
 
@@ -597,14 +597,21 @@ mod tests {
         let mut x = debug::get_all_from_position(&all_moves, usize::from(index));
 
         let mut expected_moves = vec![
-            Attack(Pawn, index, 41, false, true),
+            Attack(Pawn, index, 33, false, true),
             Standard(index, 32, false),
         ];
 
         x.sort();
         expected_moves.sort();
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
+    }
 
+    #[test]
+    fn pawn_cant_attack_outside_board_white_right() {
+
+        let game = Game::new_from_string("8/8/8/8/8/7P/8/8".to_string(), true);
+
+        let all_moves = game.get_all_moves();
         let index = 47;
 
         let mut x = debug::get_all_from_position(&all_moves, usize::from(index));
@@ -616,14 +623,55 @@ mod tests {
 
         x.sort();
         expected_moves.sort();
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
+    }
+
+
+    #[test]
+    fn pawn_cant_attack_outside_board_black_left() {
+        let game = Game::new_from_string("8/8/p7/8/8/8/8/8".to_string(), true);
+
+        let all_moves = game.get_all_moves();
+
+        let index = 16;
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(index));
+
+        let mut expected_moves = vec![
+            Attack(Pawn, index, 25, false, true),
+            Standard(index, 24, false),
+        ];
+
+        x.sort();
+        expected_moves.sort();
+        assert_eq!(expected_moves, x);
+    }
+
+    #[test]
+    fn pawn_cant_attack_outside_board_black_right() {
+        let game = Game::new_from_string("8/8/7p/8/8/8/8/8".to_string(), true);
+
+        let all_moves = game.get_all_moves();
+
+        let index = 23;
+
+        let mut x = debug::get_all_from_position(&all_moves, usize::from(index));
+
+        let mut expected_moves = vec![
+            Attack(Pawn, index, 30, false, true),
+            Standard(index, 31, false),
+        ];
+
+        x.sort();
+        expected_moves.sort();
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn rook_move_nothing() {
         let game = Game::new_from_string("8/8/8/3R4/8/8/8/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
 
         let mut expected_moves = vec![
@@ -647,14 +695,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn rook_move_1_piece_opponent() {
         let game = Game::new_from_string("8/8/3p4/2pR1p2/8/3p4/8/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             FutureMove(Rook,27,3, true),
@@ -676,14 +724,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn rook_move_2_piece_opponent() {
         let game = Game::new_from_string("8/3p4/3p4/1ppR1pp1/8/3p4/3p4/8".to_string(), true);
 
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             FutureMove(Rook,27,11, true),
@@ -702,11 +750,11 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
-    fn test_transform_Attack() {
+    fn test_transform_attack() {
         let state = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
         assert_eq!(state.board.board_state, debug_structs::get_normal_board());
     }
@@ -714,7 +762,7 @@ mod tests {
     #[test]
     fn test_castle_white() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/R3K2R".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true, true),
@@ -730,14 +778,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
 
     #[test]
     fn test_castle_white_cant_right_pieces_own() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/R3KN1R".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
@@ -751,20 +799,20 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_white_cant_right_pieces_opponent() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/R3Kn1R".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
             Attack(King,60,52, true,true),
             Attack(King,60,53, true,true),
             Attack(King,60,59, true,true),
-            Attack(King,60,61, true,true),
+            Capture(King,60,61, Knight,true),
             Castle(56, 59, 60, 58, true)
         ];
 
@@ -772,13 +820,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_white_cant_left_pieces_own() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/RB2K2R".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true, true),
@@ -793,13 +841,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_white_cant_left_pieces_opponent() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/Rb2K2R".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
@@ -814,13 +862,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_white_cant_left_square_attacked() {
         let game = Game::new_from_string("3r4/8/8/8/8/8/8/R3K2R".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
@@ -835,13 +883,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_white_can_castle_only_rook_moved() {
         let game = Game::new_from_string("1r6/8/8/8/8/8/8/R3K2R".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
 
         let mut expected_moves = vec![
@@ -858,13 +906,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_white_cant_in_check() {
         let game = Game::new_from_string("8/4r3/8/8/8/8/8/R3K2R".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
@@ -878,13 +926,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_black() {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/8/8".to_string(), false);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4, 3, true,false),
@@ -900,14 +948,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
 
     #[test]
     fn test_castle_black_cant_right_pieces_own() {
         let game = Game::new_from_string("r3kn1r/8/8/8/8/8/8/8".to_string(), false);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -921,17 +969,17 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_black_cant_right_pieces_opponent() {
         let game = Game::new_from_string("r3kN1r/8/8/8/8/8/8/8".to_string(), false);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
-            Attack(King,4,5, true,false),
+            Capture(King,4,5, Knight,false),
             Attack(King,4,11, true,false),
             Attack(King,4,12, true,false),
             Attack(King,4,13, true,false),
@@ -942,13 +990,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_black_cant_left_pieces_own() {
         let game = Game::new_from_string("rb2k2r/8/8/8/8/8/8/8".to_string(), false);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -963,13 +1011,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_black_cant_left_pieces_opponent() {
         let game = Game::new_from_string("rB2k2r/8/8/8/8/8/8/8".to_string(), false);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -984,13 +1032,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_black_cant_left_square_attacked() {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/8/3R4".to_string(), false);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -1005,13 +1053,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_black_can_castle_only_rook_moved() {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/8/1R6".to_string(), false);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -1027,13 +1075,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_castle_black_cant_in_check() {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/4R3/8".to_string(), false);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -1047,13 +1095,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
-    fn test_move_Attack() {
+    fn test_move_attack() {
         let mut game = Game::new_from_string("8/8/8/3r4/8/8/8/8".to_string(), false);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         assert_eq!(game.board.board_value, 134_217_728);
 
@@ -1073,7 +1121,7 @@ mod tests {
     #[test]
     fn test_move_castle() {
         let mut game = Game::new_from_string("8/8/8/8/8/8/8/R3K3".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let all_moves = game.get_all_moves();
 
         assert_eq!(game.board.board_value, 1_224_979_098_644_774_912);
 
@@ -1098,8 +1146,8 @@ mod tests {
 
     #[test]
     fn test_move_bishop() {
-        let mut game = Game::new_from_string("8/8/3B4/8/8/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/3B4/8/8/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,19,10, true,true),
@@ -1119,14 +1167,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
 
     #[test]
     fn test_move_bishop2() {
-        let mut game = Game::new_from_string("8/8/8/8/6B1/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/8/6B1/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 38;
 
@@ -1146,13 +1194,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_bishop_top_left_corner() {
-        let mut game = Game::new_from_string("B7/8/8/8/8/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("B7/8/8/8/8/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,0,9, true,true),
@@ -1168,13 +1216,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_bishop_top_right_corner() {
-        let mut game = Game::new_from_string("7B/8/8/8/8/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("7B/8/8/8/8/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,7,14, true,true),
@@ -1190,14 +1238,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
 
     #[test]
     fn test_move_bishop_low_right_corner() {
-        let mut game = Game::new_from_string("8/8/8/8/8/8/8/7B".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/8/8/8/8/7B".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,63,9, true,true),
@@ -1213,14 +1261,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
 
     #[test]
     fn test_move_bishop_low_left_corner() {
-        let mut game = Game::new_from_string("8/8/8/8/8/8/8/B7".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/8/8/8/8/B7".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,56,14, true,true),
@@ -1236,14 +1284,14 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
 
     #[test]
     fn test_move_knight() {
-        let mut game = Game::new_from_string("8/8/8/8/4N3/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/8/4N3/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 36;
 
@@ -1262,13 +1310,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_knight2() {
-        let mut game = Game::new_from_string("8/N7/8/8/8/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/N7/8/8/8/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 8;
 
@@ -1282,13 +1330,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_knight3() {
-        let mut game = Game::new_from_string("8/8/8/N7/8/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/N7/8/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 24;
 
@@ -1303,13 +1351,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_knight4() {
-        let mut game = Game::new_from_string("8/8/8/8/1N6/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/8/1N6/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 33;
 
@@ -1326,13 +1374,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_knight5() {
-        let mut game = Game::new_from_string("8/8/8/7N/8/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/7N/8/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 31;
 
@@ -1347,13 +1395,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_knight6() {
-        let mut game = Game::new_from_string("8/8/8/8/6N1/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/8/6N1/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 38;
 
@@ -1370,13 +1418,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_knight_top_left_corner() {
-        let mut game = Game::new_from_string("N7/8/8/8/8/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("N7/8/8/8/8/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 0;
 
@@ -1389,13 +1437,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_knight_top_right_corner() {
-        let mut game = Game::new_from_string("7N/8/8/8/8/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("7N/8/8/8/8/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 7;
 
@@ -1408,13 +1456,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_knight_bottom_left_corner() {
-        let mut game = Game::new_from_string("8/8/8/8/8/8/8/N7".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/8/8/8/8/N7".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 56;
 
@@ -1427,13 +1475,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_knight_bottom_right_corner() {
-        let mut game = Game::new_from_string("8/8/8/8/8/8/8/7N".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/8/8/8/8/7N".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 63;
 
@@ -1446,13 +1494,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_queen() {
-        let mut game = Game::new_from_string("8/8/8/3Q4/8/8/8/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/3Q4/8/8/8/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 27;
 
@@ -1491,13 +1539,13 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
 
     #[test]
     fn test_move_queen2() {
-        let mut game = Game::new_from_string("8/8/8/8/8/8/Q7/8".to_string(), true);
-        let mut all_moves = game.get_all_moves();
+        let game = Game::new_from_string("8/8/8/8/8/8/Q7/8".to_string(), true);
+        let all_moves = game.get_all_moves();
 
         let indeks = 48;
 
@@ -1531,65 +1579,6 @@ mod tests {
         x.sort();
         expected_moves.sort();
 
-        assert_eq!(x, expected_moves);
+        assert_eq!(expected_moves, x);
     }
-
-    //#[test]
-    /*fn hash_performance_test() {
-
-        let boards = debug_structs::generate_boards(1_000_000);
-
-        let mut hash: Vec<u64> = vec![];
-        let cloned_boards2 = boards.clone();
-        let now = Instant::now();
-
-        for board in cloned_boards2 {
-            hash.push(board.compute_hash());
-        }
-        let elapsed = now.elapsed();
-
-
-        println!("time: {:.2?}", elapsed);
-        let mut hash2: Vec<u64> = vec![];
-        let cloned_boards = boards.clone();
-        let now = Instant::now();
-
-        for board in cloned_boards {
-            hash2.push(board.compute_hash2());
-        }
-        let elapsed = now.elapsed();
-
-
-        println!("time: {:.2?}", elapsed);
-
-        for (i, x) in hash.iter().enumerate() {
-            assert_eq!(*x, hash2[i])
-        }
-    }
-
-    #[test]
-    fn make_move_performance_test() {
-
-        let games = debug_structs::generate_games(1_000_000);
-
-        let now = Instant::now();
-
-        for game in games.iter() {
-            let all_moves = game.get_all_moves();
-        }
-
-        let elapsed = now.elapsed();
-
-
-        /*let current_index = 11;
-        debug::debug_board_state_with_moves_marked(&game, current_index, &all_moves);
-        println!("moves_count: {}", match &all_moves[current_index] {
-            Some(x) => x.len(),
-            None => 0
-        });*/
-        println!("time: {:.2?}", elapsed);
-    }*/
-
-
-
 }
