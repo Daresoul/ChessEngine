@@ -1,10 +1,9 @@
 
 pub mod game {
- 
+    use MoveType::{Defend, FutureMove, Promotion};
     use crate::board::board::{Board, MoveType};
-    use crate::board::board::MoveType::{Castle, Standard};
-    use crate::debug_structs::debug_structs;
-    use crate::piece::piece::{Piece, PieceType};
+    use crate::board::board::MoveType::{Attack, Capture, Castle, Standard};
+    use crate::piece::piece::{Piece};
     use crate::piece::piece::PieceType::{Bishop, King, Knight, Pawn, Queen, Rook};
 
     #[derive(Clone, Copy)]
@@ -116,7 +115,7 @@ pub mod game {
                             }
                         }
                     },
-                    MoveType::Promotion(from, to, _, color) => {
+                    Promotion(from, to, _, color) => {
                         if !*color {
                             if *to == 60 {
                                 can_castle_left = false;
@@ -182,7 +181,7 @@ pub mod game {
                             }
                         }
                     },
-                    MoveType::Promotion(from, to, _, color) => {
+                    Promotion(from, to, _, color) => {
                         if *color {
                             if *to == 4 {
                                 can_castle_left = false;
@@ -270,7 +269,7 @@ pub mod game {
             moves
         }
 
-        pub fn evaluate_board(&self) -> i32 {
+        pub fn evaluate_board(&self, moves: &Vec<MoveType>) -> i32 {
             let mut score: i32 = 0;
             for i in 0..64 {
                 match self.board.board_state[i] {
@@ -285,29 +284,89 @@ pub mod game {
                 }
             }
 
+            for m in moves {
+                match m {
+                    Promotion(from, to, _, color) => {
+                        if *color {
+                            score += 50;
+                        } else {
+                            score -= 50;
+                        }
+                    },
+                    FutureMove(p, from, to, color) => {
+                        if *color {
+                            score += 25;
+                        } else {
+                            score -= 25;
+                        }
+                    },
+                    Attack(p, from, to, can_move, color) => {
+                        if *can_move {
+                            if *color {
+                                score += 5;
+                            } else {
+                                score -= 5;
+                            }
+                        }
+                    },
+                    Capture(p, from, to, cp, color) => {
+                            if *color {
+                                score += i32::from((*cp).get_value() / 2);
+                            } else {
+                                score -= i32::from((*cp).get_value() / 2);
+                            }
+                    },
+                    Defend(p, from, to, d, color) => {
+
+                    },
+                    _ => ()
+                }
+            }
+
             score
         }
 
         pub fn make_move(&mut self, chosen_move: &MoveType) -> bool {
-
+            //println!("movetype: {}", *chosen_move);
             match chosen_move {
                 Standard(from, to, color) => {
+                    //let val = usize::from(*from);
+                    //println!("board: {}", self.board.board_state.get(val).unwrap().unwrap());
                     self.board.make_move(usize::from(*from), usize::from(*to));
+                    self.is_white_turn = !self.is_white_turn;
                     return true;
                 },
-                MoveType::FutureMove(from, to, color) => {
+                FutureMove(p, from, to, color) => {
                     panic!("Dont do future movedvdslkfgsdæljfkgædsj");
                 },
-                MoveType::Promotion(from, to, piece, color) => {
+                Promotion(from, to, piece, color) => {
                     self.board.make_move(usize::from(*from), usize::from(*to));
-                    self.board.board_state[usize::from(*to)] = Some(*piece);
+                    self.board.board_state[usize::from(*to)] = Some(Piece {piece_type: *piece, is_white: *color});
+                    self.is_white_turn = !self.is_white_turn;
                     return true;
                 },
                 Castle(king_from, king_to, rook_from, rook_to, color) => {
                     self.board.make_move(usize::from(*king_from), usize::from(*king_to));
                     self.board.make_move(usize::from(*rook_from), usize::from(*rook_to));
+                    self.is_white_turn = !self.is_white_turn;
                     return true;
                 }
+                Attack(p, from, to, can_move, color) => {
+                    if *can_move {
+                        self.board.make_move(usize::from(*from), usize::from(*to));
+                        self.is_white_turn = !self.is_white_turn;
+                        return true;
+                    }
+                    panic!("Piece cannot move there.")
+                },
+                Capture(p, from, to, cp, color) => {
+                    self.board.make_move(usize::from(*from), usize::from(*to));
+                    self.is_white_turn = !self.is_white_turn;
+                    return true;
+                },
+                Defend(p, from, to, d, color) => {
+                    panic!("Dont do defend movedvdslkfgsdæljfkgædsj");
+                },
             }
         }
 

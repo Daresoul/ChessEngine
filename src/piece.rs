@@ -1,9 +1,8 @@
 pub mod piece {
-    use std::cmp::min;
     use std::fmt;
-    use std::fmt::write;
     use crate::board::board::Board;
     use crate::board::board::MoveType;
+    use crate::piece::piece::PieceType::{Bishop, King, Knight, Pawn, Queen, Rook};
 
     #[derive(Debug, Clone, Copy)]
     pub enum PieceType {
@@ -15,31 +14,58 @@ pub mod piece {
         King // 110
     }
 
+    impl PieceType {
+        pub fn get_value(&self) -> u16 {
+            match self {
+                Pawn => 100,
+                Rook => 500,
+                Knight => 300,
+                Bishop => 300,
+                Queen => 900,
+                _ => 0
+            }
+        }
+
+    }
+
+    impl fmt::Display for PieceType {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Pawn => write!(f, "P"),
+                Rook => write!(f, "R"),
+                Knight => write!(f, "N"),
+                Bishop => write!(f, "B"),
+                Queen => write!(f, "Q"),
+                King => write!(f, "K")
+            }
+        }
+    }
+
     impl PartialEq for PieceType {
         fn eq(&self, other: &Self) -> bool {
             match self {
-                PieceType::Pawn => match other {
-                    PieceType::Pawn => true,
+                Pawn => match other {
+                    Pawn => true,
                     _ => false
                 },
-                PieceType::Rook => match other {
-                    PieceType::Rook => true,
+                Rook => match other {
+                    Rook => true,
                     _ => false
                 },
-                PieceType::Knight => match other {
-                    PieceType::Knight => true,
+                Knight => match other {
+                    Knight => true,
                     _ => false
                 },
-                PieceType::Bishop => match other {
-                    PieceType::Bishop => true,
+                Bishop => match other {
+                    Bishop => true,
                     _ => false
                 },
-                PieceType::Queen => match other {
-                    PieceType::Queen => true,
+                Queen => match other {
+                    Queen => true,
                     _ => false
                 },
-                PieceType::King => match other {
-                    PieceType::King => true,
+                King => match other {
+                    King => true,
                     _ => false
                 }
             }
@@ -64,22 +90,8 @@ pub mod piece {
     impl fmt::Display for Piece {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self.is_white {
-                true => match self.piece_type {
-                    PieceType::Pawn => write!(f, "WP"),
-                    PieceType::Rook => write!(f, "WR"),
-                    PieceType::Knight => write!(f, "WN"),
-                    PieceType::Bishop => write!(f, "WB"),
-                    PieceType::Queen => write!(f, "WQ"),
-                    PieceType::King => write!(f, "WK")
-                },
-                false => match self.piece_type {
-                    PieceType::Pawn => write!(f, "BP"),
-                    PieceType::Rook => write!(f, "BR"),
-                    PieceType::Knight => write!(f, "BN"),
-                    PieceType::Bishop => write!(f, "BB"),
-                    PieceType::Queen => write!(f, "BQ"),
-                    PieceType::King => write!(f, "BK")
-                },
+                true => write!(f, "W{}", &self.piece_type.to_string()),
+                false => write!(f, "B{}", &self.piece_type.to_string())
             }
         }
     }
@@ -88,18 +100,18 @@ pub mod piece {
         pub fn u64_to_piece(val: &u64) -> Option<Piece> {
             match val {
                 0 =>  None,
-                1 =>  Some(Piece { is_white: true, piece_type: PieceType::Pawn}),
-                2 =>  Some(Piece { is_white: true, piece_type: PieceType::Rook}),
-                3 =>  Some(Piece { is_white: true, piece_type: PieceType::Knight}),
-                4 =>  Some(Piece { is_white: true, piece_type: PieceType::Bishop}),
-                5 =>  Some(Piece { is_white: true, piece_type: PieceType::Queen}),
-                6 =>  Some(Piece { is_white: true, piece_type: PieceType::King}),
-                7 =>  Some(Piece { is_white: false, piece_type: PieceType::Pawn}),
-                8 =>  Some(Piece { is_white: false, piece_type: PieceType::Rook}),
-                9 =>  Some(Piece { is_white: false, piece_type: PieceType::Knight}),
-                10 => Some(Piece { is_white: false, piece_type: PieceType::Bishop}),
-                11 => Some(Piece { is_white: false, piece_type: PieceType::Queen}),
-                12 => Some(Piece { is_white: false, piece_type: PieceType::King}),
+                1 =>  Some(Piece { is_white: true, piece_type: Pawn}),
+                2 =>  Some(Piece { is_white: true, piece_type: Rook}),
+                3 =>  Some(Piece { is_white: true, piece_type: Knight}),
+                4 =>  Some(Piece { is_white: true, piece_type: Bishop}),
+                5 =>  Some(Piece { is_white: true, piece_type: Queen}),
+                6 =>  Some(Piece { is_white: true, piece_type: King}),
+                7 =>  Some(Piece { is_white: false, piece_type: Pawn}),
+                8 =>  Some(Piece { is_white: false, piece_type: Rook}),
+                9 =>  Some(Piece { is_white: false, piece_type: Knight}),
+                10 => Some(Piece { is_white: false, piece_type: Bishop}),
+                11 => Some(Piece { is_white: false, piece_type: Queen}),
+                12 => Some(Piece { is_white: false, piece_type: King}),
                 _ => None
             }
         }
@@ -119,25 +131,18 @@ pub mod piece {
             }
         }
 
-        pub fn get_value(&self) -> u8 {
-            match self.piece_type {
-                PieceType::Pawn => 1,
-                PieceType::Rook => 5,
-                PieceType::Knight => 3,
-                PieceType::Bishop => 3,
-                PieceType::Queen => 9,
-                _ => 0
-            }
+        pub fn get_value(&self) -> u16 {
+            self.piece_type.get_value()
         }
 
         pub fn get_moves(&self, board: &Board, index: &u8) -> Vec<MoveType> {
             match self.piece_type {
-                PieceType::Pawn => self.pawn_moves(board, index),
-                PieceType::Rook => self.rook_moves(board, index),
-                PieceType::Bishop => self.bishop_moves(board, index),
-                PieceType::King => self.king_moves(board, index),
-                PieceType::Knight => self.knight_moves(board, index),
-                PieceType::Queen => self.queen_moves(board, index)
+                Pawn => self.pawn_moves(board, index),
+                Rook => self.rook_moves(board, index),
+                Bishop => self.bishop_moves(board, index),
+                King => self.king_moves(board, index),
+                Knight => self.knight_moves(board, index),
+                Queen => self.queen_moves(board, index)
             }
         }
 
@@ -145,34 +150,67 @@ pub mod piece {
             let mut moves: Vec<MoveType> = vec![];
 
             // Move straight
-            let straight_move = if self.is_white {*index - 8} else {*index + 8};
-            if !Board::get_board_state_from_position(board, &straight_move) {
-                moves.push(MoveType::Standard(*index, straight_move, self.is_white));
+            let straight_move = if self.is_white {index.checked_sub(8)} else {index.checked_add(8)};
+            match straight_move {
+                None => (),
+                Some(move_val) => {
+                    if !Board::get_board_state_from_position(board, &move_val) {
+                        if(move_val < 64) {
+                            moves.push(MoveType::Standard(*index, move_val, self.is_white));
+                        }
+                    }
+                }
             }
 
             // Move diagonal left
-            let diagonal_left = if self.is_white {*index - 9} else {*index + 7};
-            if Board::get_board_state_from_position(board, &diagonal_left) {
-                match board.board_state[usize::from(diagonal_left)] {
-                    Some(piece) => {
-                        if piece.is_white != self.is_white {
-                            moves.push(MoveType::Standard(*index,diagonal_left, self.is_white));
+            let diagonal_left = if self.is_white {index.checked_sub(9)} else {index.checked_add(7)};
+            match diagonal_left {
+                None => (),
+                Some(move_val) => {
+                    if move_val % 8 != 0 {
+                        if Board::get_board_state_from_position(board, &move_val) {
+                            match board.board_state[usize::from(move_val)] {
+                                Some(piece) => {
+                                    if piece.is_white != self.is_white && move_val < 64 {
+                                        moves.push(MoveType::Attack(Pawn, *index, move_val, true, self.is_white));
+                                    } else {
+                                        if move_val < 64 {
+                                            moves.push(MoveType::Defend(Pawn, *index, move_val, piece.piece_type, self.is_white));
+                                        }
+                                    }
+                                },
+                                None => panic!("Should never happen")
+                            }
+                        } else {
+                            moves.push(MoveType::Attack(Pawn, *index, move_val, false, self.is_white));
                         }
-                    },
-                    None => panic!("Should never happen")
+                    }
                 }
             }
 
             // Move diagonal right
-            let diagonal_right = if self.is_white {*index - 7} else {*index + 9};
-            if Board::get_board_state_from_position(board, &diagonal_right) {
-                match board.board_state[usize::from(diagonal_right)] {
-                    Some(piece) => {
-                        if piece.is_white != self.is_white {
-                            moves.push(MoveType::Standard(*index,diagonal_right, self.is_white));
+            let diagonal_right = if self.is_white {index.checked_sub(7)} else {index.checked_add(9)};
+            match diagonal_right {
+                None => (),
+                Some(move_value) => {
+                    if *index % 8 != 7 {
+                        if Board::get_board_state_from_position(board, &move_value) {
+                            match board.board_state[usize::from(move_value)] {
+                                Some(piece) => {
+                                    if piece.is_white != self.is_white && move_value < 64 {
+                                        moves.push(MoveType::Attack(Pawn, *index, move_value, true, self.is_white));
+                                    } else {
+                                        if move_value < 64 {
+                                            moves.push(MoveType::Defend(Pawn, *index, move_value, piece.piece_type, self.is_white));
+                                        }
+                                    }
+                                },
+                                None => panic!("Should never happen")
+                            }
+                        } else {
+                            moves.push(MoveType::Attack(Pawn, *index, move_value, false, self.is_white));
                         }
-                    },
-                    None => panic!("Should never happen")
+                    }
                 }
             }
 
@@ -180,14 +218,14 @@ pub mod piece {
             if self.is_white && *index >= 48 && *index <= 55 {
                 let double_move = *index - 16;
                 if !Board::get_board_state_from_position(board, &double_move) {
-                    moves.push(MoveType::Standard(*index,double_move, self.is_white));
+                    moves.push(MoveType::Standard(*index, double_move, self.is_white));
                 }
 
             }
             else if !self.is_white && *index >= 8 && *index <= 15 {
                 let double_move = *index + 16;
                 if !Board::get_board_state_from_position(board, &double_move) {
-                    moves.push(MoveType::Standard(*index,double_move, self.is_white));
+                    moves.push(MoveType::Standard(*index, double_move, self.is_white));
                 }
             }
 
@@ -195,22 +233,34 @@ pub mod piece {
             moves
         }
 
-        fn rook_move(&self, board: &Board, from: u8, index: u8, count: &u8) -> (u8, Option<MoveType>) {
+        fn rook_move(&self, board: &Board, from: u8, index: u8, count: &u8, piece_type: PieceType) -> (u8, Option<MoveType>) {
             if Board::get_board_state_from_position(board, &index) {
                 match board.board_state[usize::from(index)] {
                     Some(piece) => {
                         if piece.is_white != self.is_white {
-                            let rook_move = if *count == 0 { MoveType::Standard(from,index, self.is_white)} else { MoveType::FutureMove(from,index, self.is_white)};
+                            let rook_move = if *count == 0 {
+                                MoveType::Attack(piece_type, from,index, true,self.is_white)
+                            } else {
+                                MoveType::FutureMove(piece_type,from,index, self.is_white)
+                            };
                             return (1, Some(rook_move))
                         }
                         else {
+                            if *count == 0 {
+                                return (2, Some(MoveType::Defend(piece_type, from,index, piece.piece_type,self.is_white)))
+                            }
                             return (2, None)
                         }
                     },
                     None => panic!("Should never happen")
                 }
             } else {
-                let rook_move = if *count == 0 { MoveType::Standard(from,index, self.is_white)} else { MoveType::FutureMove(from,index, self.is_white)};
+                let rook_move =
+                    if *count == 0 {
+                        MoveType::Attack(piece_type, from,index, true,self.is_white)
+                    } else {
+                        MoveType::FutureMove(piece_type,from,index, self.is_white)
+                    };
                 return (0, Some(rook_move))
             }
         }
@@ -229,7 +279,8 @@ pub mod piece {
                     let up = index.checked_sub((i + 1) * 8);
                     match up {
                         Some(up_index) => {
-                            let (added, rook_up_move) = self.rook_move(board, *index, up_index, &count_up);
+                            let (added, rook_up_move) =
+                                self.rook_move(board, *index, up_index, &count_up, Rook);
                             count_up += added;
                             match rook_up_move {
                                 Some(move_type) => moves.push(move_type),
@@ -248,7 +299,8 @@ pub mod piece {
                                 count_down = 2;
                             }
                             else {
-                                let (added, rook_down_move) = self.rook_move(board, *index, down_index, &count_down);
+                                let (added, rook_down_move) =
+                                    self.rook_move(board, *index, down_index, &count_down, Rook);
                                 count_down += added;
                                 match rook_down_move {
                                     Some(move_type) => moves.push(move_type),
@@ -269,7 +321,8 @@ pub mod piece {
                                 count_right = 2;
                             }
                             else{
-                                let (added, rook_right_move) = self.rook_move(board, *index, right_index, &count_right);
+                                let (added, rook_right_move) =
+                                    self.rook_move(board, *index, right_index, &count_right, Rook);
                                 count_right += added;
                                 match rook_right_move {
                                     Some(move_type) => moves.push(move_type),
@@ -289,7 +342,8 @@ pub mod piece {
                             if left_index % 8 == 7 {
                                 count_left = 2;
                             } else {
-                                let (added, rook_left_move) = self.rook_move(board, *index, left_index, &count_left);
+                                let (added, rook_left_move) =
+                                    self.rook_move(board, *index, left_index, &count_left, Rook);
                                 count_left += added;
                                 match rook_left_move {
                                     Some(move_type) => moves.push(move_type),
@@ -334,14 +388,24 @@ pub mod piece {
                             match board.board_state[usize::from(val)] {
                                 Some(piece) => {
                                     if piece.is_white != self.is_white {
-                                        moves.push(MoveType::Standard(*index,val, self.is_white));
+                                        moves.push(
+                                            MoveType::Capture(
+                                                King,
+                                                *index,
+                                                val,
+                                                piece.piece_type,
+                                                self.is_white
+                                            )
+                                        );
                                     }
                                 },
                                 None => panic!("Should never happen")
                             }
                         }
                         else {
-                            moves.push(MoveType::Standard(*index,val, self.is_white));
+                            moves.push(
+                                MoveType::Attack(King, *index,val, true,self.is_white)
+                            );
                         }
                     },
                     None => {}
@@ -356,17 +420,30 @@ pub mod piece {
                 match board.board_state[usize::from(index)] {
                     Some(piece) => {
                         if piece.is_white != self.is_white {
-                            let bishop_move = if *count == 0 { MoveType::Standard(from,index, self.is_white)} else { MoveType::FutureMove(from,index, self.is_white)};
+                            let bishop_move =
+                                if *count == 0 {
+                                    MoveType::Capture(Bishop, from,index, piece.piece_type,self.is_white)
+                                } else {
+                                    MoveType::FutureMove(Bishop, from,index, self.is_white)
+                                };
                             return (*count + 1, Some(bishop_move))
                         }
                         else {
+                            if *count == 0 {
+                                return (2, Some(MoveType::Defend(Bishop, from,index, piece.piece_type,self.is_white)))
+                            }
                             return (2, None)
                         }
                     },
                     None => panic!("Should never happen")
                 }
             } else {
-                let bishop_move = if *count == 0 { MoveType::Standard(from,index, self.is_white)} else { MoveType::FutureMove(from,index, self.is_white)};
+                let bishop_move =
+                    if *count == 0 {
+                        MoveType::Attack(Bishop, from,index, true,self.is_white)
+                    } else {
+                        MoveType::FutureMove(Bishop,from,index, self.is_white)
+                    };
                 return (0, Some(bishop_move))
             }
         }
@@ -515,14 +592,33 @@ pub mod piece {
                             match board.board_state[usize::from(val)] {
                                 Some(piece) => {
                                     if piece.is_white != self.is_white {
-                                        moves.push(MoveType::Standard(*index,val, self.is_white));
+                                        moves.push(
+                                            MoveType::Attack(
+                                                Knight,
+                                                *index,
+                                                val,
+                                                true,
+                                                self.is_white
+                                            )
+                                        );
+                                    }
+                                    else {
+                                        moves.push(
+                                            MoveType::Defend(
+                                                Knight,
+                                                *index,
+                                                val,
+                                                piece.piece_type,
+                                                self.is_white
+                                            )
+                                        );
                                     }
                                 },
                                 None => panic!("Should never happen")
                             }
                         }
                         else {
-                            moves.push(MoveType::Standard(*index,val, self.is_white));
+                            moves.push(MoveType::Attack(Knight, *index,val, true,self.is_white));
                         }
                     },
                     None => {}
