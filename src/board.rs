@@ -32,7 +32,7 @@ pub mod board {
                 MoveType::Castle(king_start, king_end, rook_start, rook_end, color) => {
                     write!(f, "Castle({}, {}, {}, {}, {})", king_start, king_end, rook_start, rook_end, color)
                 },
-                MoveType::Attack(p, from, val, can_move, color) => {
+                MoveType::Attack(p, from, val, _can_move, color) => {
                     write!(f, "Attack({}, {}, {}, {})", p, from, val, color)
                 },
                 MoveType::Capture(p, from, val, cp, color) => {
@@ -48,19 +48,19 @@ pub mod board {
     impl fmt::Display for MoveType {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             match self {
-                MoveType::Standard(from, val, color) => {
+                MoveType::Standard(_from, val, color) => {
                     write!(f, "Standard({}, {})", val, color)
                 },
-                MoveType::FutureMove(p, from, val, color) => {
+                MoveType::FutureMove(p, _from, val, color) => {
                     write!(f, "FutureMove({}, {}, {})", p, val, color)
                 },
-                MoveType::Promotion(from, val, piece, color) => {
+                MoveType::Promotion(_from, val, piece, color) => {
                     write!(f, "Promotion({}, {}, {})", val, piece, color)
                 },
                 MoveType::Castle(king_start, king_end, rook_start, rook_end, color) => {
                     write!(f, "Castle({}, {}, {}, {}, {})", king_start, king_end, rook_start, rook_end, color)
                 },
-                MoveType::Attack(p, from, val, can_move, color) => {
+                MoveType::Attack(p, from, val, _can_move, color) => {
                     write!(f, "Attack({}, {}, {}, {})", p, from, val, color)
                 },
                 MoveType::Capture(p, from, val, cp, color) => {
@@ -80,9 +80,9 @@ pub mod board {
     impl PartialEq<Self> for MoveType {
         fn eq(&self, other: &Self) -> bool {
             match self {
-                MoveType::Standard(from, val, _) => {
+                MoveType::Standard(_from, val, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val == val2;
                         },
                         _ => {
@@ -90,9 +90,9 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::FutureMove(p, from, val, _) => {
+                MoveType::FutureMove(_p, _from, val, _) => {
                     match other {
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val == val2;
                         },
                         _ => {
@@ -110,9 +110,9 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::Attack(p, from, val, can_move, _) => {
+                MoveType::Attack(p, _from, val, _can_move, _) => {
                     match other {
-                        MoveType::Attack(p2, from, val2, can_move, _) => {
+                        MoveType::Attack(p2, from, val2, _can_move, _) => {
                             return p == p2 && val == val2 && from == from;
                         },
                         _ => {
@@ -120,9 +120,9 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::Capture(p, from, val, cp, _) => {
+                MoveType::Capture(p, _from, val, _cp, _) => {
                     match other {
-                        MoveType::Capture(p2, from, val2, cp, _) => {
+                        MoveType::Capture(p2, from, val2, _cp, _) => {
                             return p == p2 && val == val2 && from == from;
                         },
                         _ => {
@@ -130,9 +130,9 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::Defend(p, from, val, d, _) => {
+                MoveType::Defend(p, _from, val, _d, _) => {
                     match other {
-                        MoveType::Defend(p2, from, val2, d, _) => {
+                        MoveType::Defend(p2, from, val2, _d, _) => {
                             return p == p2 && val == val2 && from == from;
                         },
                         _ => {
@@ -148,24 +148,24 @@ pub mod board {
     impl PartialOrd<Self> for MoveType {
         fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
             match self {
-                MoveType::Standard(from, val, _) => {
+                MoveType::Standard(_from, val, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return val.partial_cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return val.partial_cmp(val2);
                         },
                         _ => {
@@ -173,24 +173,24 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::FutureMove(p, from, val, _) => {
+                MoveType::FutureMove(_p, _from, val, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return val.partial_cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return val.partial_cmp(val2);
                         },
                         _ => {
@@ -201,22 +201,22 @@ pub mod board {
                 MoveType::Castle(rook_start_, _, _, _, _) =>
                 {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return rook_start_.partial_cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return rook_start_.partial_cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return rook_start_.partial_cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return rook_start_.partial_cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return rook_start_.partial_cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return rook_start_.partial_cmp(val2);
                         },
                         _ => {
@@ -224,24 +224,24 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::Attack(p, from, val, can_move, _) => {
+                MoveType::Attack(_p, _from, val, _can_move, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return val.partial_cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return val.partial_cmp(val2);
                         },
                         _ => {
@@ -249,24 +249,24 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::Capture(p, from, val, cp, _) => {
+                MoveType::Capture(_p, _from, val, _cp, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return val.partial_cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return val.partial_cmp(val2);
                         },
                         _ => {
@@ -274,24 +274,24 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::Defend(p, from, val, d, _) => {
+                MoveType::Defend(_p, _from, val, _d, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val.partial_cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return val.partial_cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return val.partial_cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return val.partial_cmp(val2);
                         },
                         _ => {
@@ -307,24 +307,24 @@ pub mod board {
     impl Ord for MoveType {
         fn cmp(&self, other: &Self) -> Ordering {
             match self {
-                MoveType::Standard(from, val, _) => {
+                MoveType::Standard(_from, val, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val.cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return val.cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return val.cmp(val2);
                         },
                         _ => {
@@ -332,24 +332,24 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::FutureMove(p, from, val, _) => {
+                MoveType::FutureMove(_p, _from, val, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val.cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return val.cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return val.cmp(val2);
                         },
                         _ => {
@@ -360,22 +360,22 @@ pub mod board {
                 MoveType::Castle(rook_start, _, _, _, _) =>
                 {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return rook_start.cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return rook_start.cmp(val2);
                         },
                         MoveType::Castle(rook_start_second, _, _, _, _) => {
                             return rook_start.cmp(rook_start_second);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return rook_start.cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return rook_start.cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return rook_start.cmp(val2);
                         },
                         _ => {
@@ -383,24 +383,24 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::Attack(p, from, val, can_move, _) => {
+                MoveType::Attack(_p, _from, val, _can_move, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val.cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return val.cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return val.cmp(val2);
                         },
                         _ => {
@@ -408,24 +408,24 @@ pub mod board {
                         }
                     }
                 },
-                MoveType::Capture(p, from, val, cp, _) => {
+                MoveType::Capture(_p, _from, val, _cp, _) => {
                     match other {
-                        MoveType::Standard(from, val2, _) => {
+                        MoveType::Standard(_from, val2, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::FutureMove(p, from, val2, _) => {
+                        MoveType::FutureMove(_p, _from, val2, _) => {
                             return val.cmp(val2);
                         },
                         MoveType::Castle(rook_start, _, _, _, _) => {
                             return val.cmp(rook_start);
                         },
-                        MoveType::Attack(p, from, val2, can_move, _) => {
+                        MoveType::Attack(_p, _from, val2, _can_move, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::Capture(p, from, val2, cp, _) => {
+                        MoveType::Capture(_p, _from, val2, _cp, _) => {
                             return val.cmp(val2);
                         },
-                        MoveType::Defend(p, from, val2, d, _) => {
+                        MoveType::Defend(_p, _from, val2, _d, _) => {
                             return val.cmp(val2);
                         },
                         _ => {

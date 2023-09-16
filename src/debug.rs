@@ -2,37 +2,37 @@
 pub mod debug
 {
     use MoveType::Castle;
-    use crate::game::game::Game;
-    use crate::board::board::{Board, MoveType};
+    
+    use crate::board::board::{MoveType};
     use crate::board::board::MoveType::{Attack, Capture, Defend, FutureMove, Standard};
-    use crate::piece::piece::Piece;
+    
 
     pub fn get_all_from_position(moves: &Vec<MoveType>, starting_square: usize) -> Vec<MoveType> {
         let mut selected_moves: Vec<MoveType> = vec![];
 
         for single_move in moves.iter() {
             match single_move {
-                Standard(from, to, _) => {
+                Standard(from, _to, _) => {
                     if *from == starting_square as u8 {
                         selected_moves.push(*single_move);
                     }
                 },
-                FutureMove(_, from, to, _) => {
+                FutureMove(_, from, _to, _) => {
                     if *from == starting_square as u8 {
                         selected_moves.push(*single_move);
                     }
                 },
-                Attack(_, from, to, _, _) => {
+                Attack(_, from, _to, _, _) => {
                     if *from == starting_square as u8 {
                         selected_moves.push(*single_move);
                     }
                 },
-                Capture(_, from, to, _, _) => {
+                Capture(_, from, _to, _, _) => {
                     if *from == starting_square as u8 {
                         selected_moves.push(*single_move);
                     }
                 },
-                Defend(_, from, to, _, _) => {
+                Defend(_, from, _to, _, _) => {
                     if *from == starting_square as u8 {
                         selected_moves.push(*single_move);
                     }
@@ -106,7 +106,7 @@ pub mod debug
                         return *single_move;
                     }
                 },
-                Defend(pt, f, t, _, _) => {
+                Defend(_pt, f, t, _, _) => {
                     if *f == from && *t == to {
                         return *single_move;
                     }

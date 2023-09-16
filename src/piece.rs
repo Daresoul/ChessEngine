@@ -155,7 +155,7 @@ pub mod piece {
                 None => (),
                 Some(move_val) => {
                     if !Board::get_board_state_from_position(board, &move_val) {
-                        if(move_val < 64) {
+                        if move_val < 64 {
                             moves.push(MoveType::Standard(*index, move_val, self.is_white));
                         }
                     }

@@ -101,7 +101,7 @@ pub mod game {
 
             for single_move in moves.iter() {
                 match single_move {
-                    Standard(from, to, color) => {
+                    Standard(_from, to, color) => {
                         if !*color {
                             if *to == 60 {
                                 can_castle_left = false;
@@ -115,7 +115,7 @@ pub mod game {
                             }
                         }
                     },
-                    Promotion(from, to, _, color) => {
+                    Promotion(_from, to, _, color) => {
                         if !*color {
                             if *to == 60 {
                                 can_castle_left = false;
@@ -167,7 +167,7 @@ pub mod game {
 
             for single_move in moves.iter() {
                 match single_move {
-                    Standard(from, to, color) => {
+                    Standard(_from, to, color) => {
                         if *color {
                             if *to == 4 {
                                 can_castle_left = false;
@@ -181,7 +181,7 @@ pub mod game {
                             }
                         }
                     },
-                    Promotion(from, to, _, color) => {
+                    Promotion(_from, to, _, color) => {
                         if *color {
                             if *to == 4 {
                                 can_castle_left = false;
@@ -286,21 +286,21 @@ pub mod game {
 
             for m in moves {
                 match m {
-                    Promotion(from, to, _, color) => {
+                    Promotion(_from, _to, _, color) => {
                         if *color {
                             score += 50;
                         } else {
                             score -= 50;
                         }
                     },
-                    FutureMove(p, from, to, color) => {
+                    FutureMove(_p, _from, _to, color) => {
                         if *color {
                             score += 25;
                         } else {
                             score -= 25;
                         }
                     },
-                    Attack(p, from, to, can_move, color) => {
+                    Attack(_p, _from, _to, can_move, color) => {
                         if *can_move {
                             if *color {
                                 score += 5;
@@ -309,14 +309,14 @@ pub mod game {
                             }
                         }
                     },
-                    Capture(p, from, to, cp, color) => {
+                    Capture(_p, _from, _to, cp, color) => {
                             if *color {
                                 score += i32::from((*cp).get_value() / 2);
                             } else {
                                 score -= i32::from((*cp).get_value() / 2);
                             }
                     },
-                    Defend(p, from, to, d, color) => {
+                    Defend(_p, _from, _to, _d, _color) => {
 
                     },
                     _ => ()
@@ -329,14 +329,14 @@ pub mod game {
         pub fn make_move(&mut self, chosen_move: &MoveType) -> bool {
             //println!("movetype: {}", *chosen_move);
             match chosen_move {
-                Standard(from, to, color) => {
+                Standard(from, to, _color) => {
                     //let val = usize::from(*from);
                     //println!("board: {}", self.board.board_state.get(val).unwrap().unwrap());
                     self.board.make_move(usize::from(*from), usize::from(*to));
                     self.is_white_turn = !self.is_white_turn;
                     return true;
                 },
-                FutureMove(p, from, to, color) => {
+                FutureMove(_p, _from, _to, _color) => {
                     panic!("Dont do future movedvdslkfgsdæljfkgædsj");
                 },
                 Promotion(from, to, piece, color) => {
@@ -345,13 +345,13 @@ pub mod game {
                     self.is_white_turn = !self.is_white_turn;
                     return true;
                 },
-                Castle(king_from, king_to, rook_from, rook_to, color) => {
+                Castle(king_from, king_to, rook_from, rook_to, _color) => {
                     self.board.make_move(usize::from(*king_from), usize::from(*king_to));
                     self.board.make_move(usize::from(*rook_from), usize::from(*rook_to));
                     self.is_white_turn = !self.is_white_turn;
                     return true;
                 }
-                Attack(p, from, to, can_move, color) => {
+                Attack(_p, from, to, can_move, _color) => {
                     if *can_move {
                         self.board.make_move(usize::from(*from), usize::from(*to));
                         self.is_white_turn = !self.is_white_turn;
@@ -359,12 +359,12 @@ pub mod game {
                     }
                     panic!("Piece cannot move there.")
                 },
-                Capture(p, from, to, cp, color) => {
+                Capture(_p, from, to, _cp, _color) => {
                     self.board.make_move(usize::from(*from), usize::from(*to));
                     self.is_white_turn = !self.is_white_turn;
                     return true;
                 },
-                Defend(p, from, to, d, color) => {
+                Defend(_p, _from, _to, _d, _color) => {
                     panic!("Dont do defend movedvdslkfgsdæljfkgædsj");
                 },
             }
