@@ -1,5 +1,6 @@
 pub mod piece {
     use std::fmt;
+    use std::fmt::{Display, Formatter, write};
     use std::path::is_separator;
     use crate::board::board::Board;
     use crate::board::board::MoveType;
@@ -16,14 +17,25 @@ pub mod piece {
     }
 
     impl PieceType {
-        pub fn get_value(&self) -> u16 {
-            match self {
-                Pawn => 100,
-                Rook => 500,
-                Knight => 300,
-                Bishop => 300,
-                Queen => 900,
-                _ => 0
+        pub fn get_piece_type_value(&self, is_mg: bool) -> i32 {
+            if is_mg {
+                match self {
+                    Pawn => 124,
+                    Knight => 781,
+                    Bishop => 825,
+                    Rook => 1276,
+                    Queen => 2538,
+                    _ => 0
+                }
+            } else {
+                match self {
+                    Pawn => 206,
+                    Knight => 854,
+                    Bishop => 915,
+                    Rook => 1380,
+                    Queen => 2682,
+                    _ => 0
+                }
             }
         }
 
@@ -41,7 +53,6 @@ pub mod piece {
             }
         }
     }
-
     impl PartialEq for PieceType {
         fn eq(&self, other: &Self) -> bool {
             match self {
@@ -132,8 +143,8 @@ pub mod piece {
             }
         }
 
-        pub fn get_value(&self) -> u16 {
-            self.piece_type.get_value()
+        pub fn get_value(&self, is_mg: bool) -> i32 {
+            self.piece_type.get_piece_type_value(is_mg)
         }
 
         pub fn get_moves(&self, board: &Board, index: &u8) -> (Vec<MoveType>, Vec<MoveType>) {

@@ -3,9 +3,37 @@ pub mod debug
 {
     use MoveType::Castle;
     
-    use crate::board::board::{MoveType};
+    use crate::board::board::{Board, MoveType};
     use crate::board::board::MoveType::{Attack, Capture, Defend, FutureMove, Standard};
-    
+    use crate::game::game::Game;
+    use crate::piece::piece::Piece;
+
+
+    pub fn print_board(game: &Game) {
+        println!("Board:");
+        for i in 0..8 {
+            for j in 0..8 {
+                print!("┌{:─^width$}┐", match game.board.board_state[i * 8 + j] {
+                    Some(piece) => piece.to_string(),
+                    None => " ".to_string()
+                }, width = 4);
+            }
+            println!();
+        }
+    }
+
+    pub fn print_board_board(board: &Board) {
+        println!("Board:");
+        for i in 0..8 {
+            for j in 0..8 {
+                print!("┌{:─^width$}┐", match board.board_state[i * 8 + j] {
+                    Some(piece) => piece.to_string(),
+                    None => " ".to_string()
+                }, width = 4);
+            }
+            println!();
+        }
+    }
 
     pub fn get_all_from_position(moves: &Vec<MoveType>, starting_square: usize) -> Vec<MoveType> {
         let mut selected_moves: Vec<MoveType> = vec![];

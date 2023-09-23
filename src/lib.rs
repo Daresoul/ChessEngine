@@ -1,7 +1,7 @@
 pub mod game;
 pub mod board;
-mod piece;
-mod debug;
+pub mod piece;
+pub mod debug;
 pub mod debug_structs;
 
 /*
@@ -264,7 +264,7 @@ mod tests {
     fn king_move() {
         let game = Game::new_from_string("8/8/8/3K4/8/8/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,27, 18, true, true), Attack(King,27, 19, true, true),
@@ -284,7 +284,7 @@ mod tests {
     fn king_move_top_right_corner() {
         let game = Game::new_from_string("7K/8/8/8/8/8/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,7,6, true,true),
@@ -303,7 +303,7 @@ mod tests {
     fn king_move_bottom_right_corner() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/7K".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,63, 54, true,true), Attack(King,63, 55, true,true), Attack(King,63, 62, true,true),
@@ -320,7 +320,7 @@ mod tests {
     fn king_move_bottom_left_corner() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/K7".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,56,48, true,true), Attack(King,56,49, true,true), Attack(King,56,57, true,true),
@@ -337,7 +337,7 @@ mod tests {
     fn king_move_top_left_corner() {
         let game = Game::new_from_string("K7/8/8/8/8/8/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,0,1, true,true),
@@ -356,7 +356,7 @@ mod tests {
     fn king_move_cant_take() {
         let game = Game::new_from_string("8/8/2PPP3/2PKP3/2PPP3/8/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves: Vec<MoveType> = vec![];
 
@@ -371,7 +371,7 @@ mod tests {
     fn king_move_take() {
         let game = Game::new_from_string("8/8/2ppp3/2pKp3/2ppp3/8/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Capture(King,27,18, Pawn,true),
@@ -395,7 +395,7 @@ mod tests {
     fn pawn_move_single_double_white() {
         let game = Game::new_from_string("8/3p4/8/8/8/8/3P4/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let index = 51;
 
@@ -416,7 +416,7 @@ mod tests {
     fn pawn_move_single_double_black() {
         let game = Game::new_from_string("8/3p4/8/8/8/8/3P4/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let index = 11;
 
@@ -439,7 +439,7 @@ mod tests {
     fn pawn_move_all_moves_available() {
         let game = Game::new_from_string("8/3p4/2P1P3/8/8/2p1p3/3P4/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let index = 51;
 
@@ -477,15 +477,13 @@ mod tests {
     fn pawn_move_cant_take_allied_pieces() {
         let game = Game::new_from_string("8/3p4/2p1p3/8/8/2P1P3/3P4/8".to_string(), false);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let index = 51;
 
         let mut x = debug::get_all_from_position(&all_moves, usize::from(index));
 
         let mut expected_moves = vec![
-            Defend(Pawn, index, 42, Pawn, true),
-            Defend(Pawn, index, 44, Pawn, true),
             Standard(index, 43, false),
             Standard(index, 35, false),
         ];
@@ -494,14 +492,11 @@ mod tests {
         expected_moves.sort();
         assert_eq!(expected_moves, x);
 
-
         let index = 11;
 
         let mut x = debug::get_all_from_position(&all_moves, usize::from(index));
 
         let mut expected_moves = vec![
-            Defend(Pawn, index, 18, Pawn, true),
-            Defend(Pawn, index, 20, Pawn, true),
             Standard(index, 19, false),
             Standard(index, 27, false),
         ];
@@ -516,7 +511,7 @@ mod tests {
     fn pawn_move_can_take_outside_start_squares() {
         let game = Game::new_from_string("8/8/3p4/2P1P3/2p1p3/3P4/8/8".to_string(), false);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let index = 43;
 
@@ -553,7 +548,7 @@ mod tests {
     fn pawn_move_cant_move_double() {
         let game = Game::new_from_string("8/8/3p4/8/8/3P4/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let index = 43;
 
@@ -590,7 +585,7 @@ mod tests {
     fn pawn_cant_attack_outside_board_white_left() {
         let game = Game::new_from_string("8/8/8/8/8/P7/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let index = 40;
 
@@ -611,7 +606,7 @@ mod tests {
 
         let game = Game::new_from_string("8/8/8/8/8/7P/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
         let index = 47;
 
         let mut x = debug::get_all_from_position(&all_moves, usize::from(index));
@@ -631,7 +626,7 @@ mod tests {
     fn pawn_cant_attack_outside_board_black_left() {
         let game = Game::new_from_string("8/8/p7/8/8/8/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let index = 16;
 
@@ -651,7 +646,7 @@ mod tests {
     fn pawn_cant_attack_outside_board_black_right() {
         let game = Game::new_from_string("8/8/7p/8/8/8/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let index = 23;
 
@@ -671,7 +666,7 @@ mod tests {
     fn rook_move_nothing() {
         let game = Game::new_from_string("8/8/8/3R4/8/8/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
 
         let mut expected_moves = vec![
@@ -702,7 +697,7 @@ mod tests {
     fn rook_move_1_piece_opponent() {
         let game = Game::new_from_string("8/8/3p4/2pR1p2/8/3p4/8/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             FutureMove(Rook,27,3, true),
@@ -731,7 +726,7 @@ mod tests {
     fn rook_move_2_piece_opponent() {
         let game = Game::new_from_string("8/3p4/3p4/1ppR1pp1/8/3p4/3p4/8".to_string(), true);
 
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             FutureMove(Rook,27,11, true),
@@ -762,7 +757,7 @@ mod tests {
     #[test]
     fn test_castle_white() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/R3K2R".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true, true),
@@ -785,7 +780,7 @@ mod tests {
     #[test]
     fn test_castle_white_cant_right_pieces_own() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/R3KN1R".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
@@ -805,7 +800,7 @@ mod tests {
     #[test]
     fn test_castle_white_cant_right_pieces_opponent() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/R3Kn1R".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
@@ -826,7 +821,7 @@ mod tests {
     #[test]
     fn test_castle_white_cant_left_pieces_own() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/RB2K2R".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true, true),
@@ -847,7 +842,7 @@ mod tests {
     #[test]
     fn test_castle_white_cant_left_pieces_opponent() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/Rb2K2R".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
@@ -868,7 +863,7 @@ mod tests {
     #[test]
     fn test_castle_white_cant_left_square_attacked() {
         let game = Game::new_from_string("3r4/8/8/8/8/8/8/R3K2R".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
@@ -889,7 +884,7 @@ mod tests {
     #[test]
     fn test_castle_white_can_castle_only_rook_moved() {
         let game = Game::new_from_string("1r6/8/8/8/8/8/8/R3K2R".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
 
         let mut expected_moves = vec![
@@ -912,7 +907,7 @@ mod tests {
     #[test]
     fn test_castle_white_cant_in_check() {
         let game = Game::new_from_string("8/4r3/8/8/8/8/8/R3K2R".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,60,51, true,true),
@@ -932,7 +927,7 @@ mod tests {
     #[test]
     fn test_castle_black() {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/8/8".to_string(), false);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4, 3, true,false),
@@ -955,7 +950,7 @@ mod tests {
     #[test]
     fn test_castle_black_cant_right_pieces_own() {
         let game = Game::new_from_string("r3kn1r/8/8/8/8/8/8/8".to_string(), false);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -975,7 +970,7 @@ mod tests {
     #[test]
     fn test_castle_black_cant_right_pieces_opponent() {
         let game = Game::new_from_string("r3kN1r/8/8/8/8/8/8/8".to_string(), false);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -996,7 +991,7 @@ mod tests {
     #[test]
     fn test_castle_black_cant_left_pieces_own() {
         let game = Game::new_from_string("rb2k2r/8/8/8/8/8/8/8".to_string(), false);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -1017,7 +1012,7 @@ mod tests {
     #[test]
     fn test_castle_black_cant_left_pieces_opponent() {
         let game = Game::new_from_string("rB2k2r/8/8/8/8/8/8/8".to_string(), false);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -1038,7 +1033,7 @@ mod tests {
     #[test]
     fn test_castle_black_cant_left_square_attacked() {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/8/3R4".to_string(), false);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -1059,7 +1054,7 @@ mod tests {
     #[test]
     fn test_castle_black_can_castle_only_rook_moved() {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/8/1R6".to_string(), false);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -1081,7 +1076,7 @@ mod tests {
     #[test]
     fn test_castle_black_cant_in_check() {
         let game = Game::new_from_string("r3k2r/8/8/8/8/8/4R3/8".to_string(), false);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(King,4,3, true,false),
@@ -1101,7 +1096,7 @@ mod tests {
     #[test]
     fn test_move_attack() {
         let mut game = Game::new_from_string("8/8/8/3r4/8/8/8/8".to_string(), false);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         assert_eq!(game.board.board_value, 134_217_728);
 
@@ -1121,7 +1116,7 @@ mod tests {
     #[test]
     fn test_move_castle() {
         let mut game = Game::new_from_string("8/8/8/8/8/8/8/R3K3".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         assert_eq!(game.board.board_value, 1_224_979_098_644_774_912);
 
@@ -1147,7 +1142,7 @@ mod tests {
     #[test]
     fn test_move_bishop() {
         let game = Game::new_from_string("8/8/3B4/8/8/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,19,10, true,true),
@@ -1174,7 +1169,7 @@ mod tests {
     #[test]
     fn test_move_bishop2() {
         let game = Game::new_from_string("8/8/8/8/6B1/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 38;
 
@@ -1200,7 +1195,7 @@ mod tests {
     #[test]
     fn test_move_bishop_top_left_corner() {
         let game = Game::new_from_string("B7/8/8/8/8/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,0,9, true,true),
@@ -1222,7 +1217,7 @@ mod tests {
     #[test]
     fn test_move_bishop_top_right_corner() {
         let game = Game::new_from_string("7B/8/8/8/8/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,7,14, true,true),
@@ -1245,7 +1240,7 @@ mod tests {
     #[test]
     fn test_move_bishop_low_right_corner() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/7B".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,63,9, true,true),
@@ -1268,7 +1263,7 @@ mod tests {
     #[test]
     fn test_move_bishop_low_left_corner() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/B7".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let mut expected_moves = vec![
             Attack(Bishop,56,14, true,true),
@@ -1291,7 +1286,7 @@ mod tests {
     #[test]
     fn test_move_knight() {
         let game = Game::new_from_string("8/8/8/8/4N3/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 36;
 
@@ -1316,7 +1311,7 @@ mod tests {
     #[test]
     fn test_move_knight2() {
         let game = Game::new_from_string("8/N7/8/8/8/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 8;
 
@@ -1336,7 +1331,7 @@ mod tests {
     #[test]
     fn test_move_knight3() {
         let game = Game::new_from_string("8/8/8/N7/8/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 24;
 
@@ -1357,7 +1352,7 @@ mod tests {
     #[test]
     fn test_move_knight4() {
         let game = Game::new_from_string("8/8/8/8/1N6/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 33;
 
@@ -1380,7 +1375,7 @@ mod tests {
     #[test]
     fn test_move_knight5() {
         let game = Game::new_from_string("8/8/8/7N/8/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 31;
 
@@ -1401,7 +1396,7 @@ mod tests {
     #[test]
     fn test_move_knight6() {
         let game = Game::new_from_string("8/8/8/8/6N1/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 38;
 
@@ -1424,7 +1419,7 @@ mod tests {
     #[test]
     fn test_move_knight_top_left_corner() {
         let game = Game::new_from_string("N7/8/8/8/8/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 0;
 
@@ -1443,7 +1438,7 @@ mod tests {
     #[test]
     fn test_move_knight_top_right_corner() {
         let game = Game::new_from_string("7N/8/8/8/8/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 7;
 
@@ -1462,7 +1457,7 @@ mod tests {
     #[test]
     fn test_move_knight_bottom_left_corner() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/N7".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 56;
 
@@ -1481,7 +1476,7 @@ mod tests {
     #[test]
     fn test_move_knight_bottom_right_corner() {
         let game = Game::new_from_string("8/8/8/8/8/8/8/7N".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 63;
 
@@ -1500,7 +1495,7 @@ mod tests {
     #[test]
     fn test_move_queen() {
         let game = Game::new_from_string("8/8/8/3Q4/8/8/8/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 27;
 
@@ -1545,7 +1540,7 @@ mod tests {
     #[test]
     fn test_move_queen2() {
         let game = Game::new_from_string("8/8/8/8/8/8/Q7/8".to_string(), true);
-        let all_moves = game.get_all_moves();
+        let (all_moves, all_defense)  = game.get_all_moves();
 
         let indeks = 48;
 

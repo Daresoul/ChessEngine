@@ -2,6 +2,8 @@ pub mod board {
     use std::cmp::Ordering;
     use std::{fmt, u8};
     use std::fmt::{Debug, Formatter};
+    use crate::debug;
+    use crate::debug_structs::debug_structs::get_debug_pawn_board;
 
     use crate::piece::piece::{Piece, PieceType};
     use crate::game::game::{Game};
@@ -48,14 +50,14 @@ pub mod board {
     impl fmt::Display for MoveType {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             match self {
-                MoveType::Standard(_from, val, color) => {
-                    write!(f, "Standard({}, {})", val, color)
+                MoveType::Standard(from, val, color) => {
+                    write!(f, "Standard({}, {}, {})",from, val, color)
                 },
-                MoveType::FutureMove(p, _from, val, color) => {
-                    write!(f, "FutureMove({}, {}, {})", p, val, color)
+                MoveType::FutureMove(p, from, val, color) => {
+                    write!(f, "FutureMove({}, {}, {}, {})", p, from, val, color)
                 },
-                MoveType::Promotion(_from, val, piece, color) => {
-                    write!(f, "Promotion({}, {}, {})", val, piece, color)
+                MoveType::Promotion(from, val, piece, color) => {
+                    write!(f, "Promotion({}, {}, {}, {})",from, val, piece, color)
                 },
                 MoveType::Castle(king_start, king_end, rook_start, rook_end, color) => {
                     write!(f, "Castle({}, {}, {}, {}, {})", king_start, king_end, rook_start, rook_end, color)
@@ -515,7 +517,7 @@ pub mod board {
             return false;
         }
 
-        pub fn make_move(&mut self, from: usize, to: usize) -> () {
+        pub fn make_move(&mut self, from: usize, to: usize, m: &MoveType) -> () {
             let current_option_piece = self.board_state[from];
             match current_option_piece {
                 Some(piece) => {
@@ -524,7 +526,10 @@ pub mod board {
                     self.board_state[from] = None;
                     self.board_state[to] = Some(piece);
                 },
-                None => panic!("No piece at position")
+                None => {
+                    debug::debug::print_board_board(self);
+                    panic!("No piece at position {}, {}, {}", from, to, m);
+                }
             }
         }
 
