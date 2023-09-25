@@ -168,6 +168,54 @@ pub mod debug_structs {
     }
 
     pub fn get_random_board2() -> [Option<Piece>; 64] {
-        [Some(Piece { piece_type: Rook, is_white: false }), None, Some(Piece { piece_type: Bishop, is_white: false }), Some(Piece { piece_type: King, is_white: false }), None, None, None, Some(Piece { piece_type: Rook, is_white: false }), Some(Piece { piece_type: Pawn, is_white: false }), None, None, Some(Piece { piece_type: Pawn, is_white: false }), Some(Piece { piece_type: Bishop, is_white: true }), Some(Piece { piece_type: Pawn, is_white: false }), Some(Piece { piece_type: Knight, is_white: true }), Some(Piece { piece_type: Pawn, is_white: false }), Some(Piece { piece_type: Knight, is_white: false }), None, None, None, None, Some(Piece { piece_type: Knight, is_white: false }), None, None, None, Some(Piece { piece_type: Pawn, is_white: false }), None, Some(Piece { piece_type: Knight, is_white: true }), Some(Piece { piece_type: Pawn, is_white: true }), None, None, Some(Piece { piece_type: Pawn, is_white: true }), None, None, None, None, None, None, Some(Piece { piece_type: Pawn, is_white: true }), None, None, None, None, Some(Piece { piece_type: Pawn, is_white: true }), None, None, None, None, Some(Piece { piece_type: Pawn, is_white: true }), None, Some(Piece { piece_type: Pawn, is_white: true }), None, Some(Piece { piece_type: King, is_white: true }), None, None, None, Some(Piece { piece_type: Queen, is_white: false }), None, None, None, None, None, Some(Piece { piece_type: Bishop, is_white: false }), None]
+        [
+            Some(Piece { piece_type: Rook, is_white: false }),
+            None,
+            Some(Piece { piece_type: Bishop, is_white: false }),
+            Some(Piece { piece_type: King, is_white: false }),
+            None, None, None,
+            Some(Piece { piece_type: Rook, is_white: false }),
+
+            Some(Piece { piece_type: Pawn, is_white: false }),
+            None, None,
+            Some(Piece { piece_type: Pawn, is_white: false }),
+            Some(Piece { piece_type: Bishop, is_white: true }),
+            Some(Piece { piece_type: Pawn, is_white: false }),
+            Some(Piece { piece_type: Knight, is_white: true }),
+            Some(Piece { piece_type: Pawn, is_white: false }),
+
+            Some(Piece { piece_type: Knight, is_white: false }),
+            None, None, None, None,
+            Some(Piece { piece_type: Knight, is_white: false }),
+            None, None,
+
+            None,
+            Some(Piece { piece_type: Pawn, is_white: false }),
+            None,
+            Some(Piece { piece_type: Knight, is_white: true }),
+            Some(Piece { piece_type: Pawn, is_white: true }),
+            None, None,
+            Some(Piece { piece_type: Pawn, is_white: true }),
+
+            None, None, None, None, None, None,
+            Some(Piece { piece_type: Pawn, is_white: true }),
+            None,
+
+            None, None, None,
+            Some(Piece { piece_type: Pawn, is_white: true }),
+            None, None, None, None,
+
+            Some(Piece { piece_type: Pawn, is_white: true }),
+            None,
+            Some(Piece { piece_type: Pawn, is_white: true }),
+            None,
+            Some(Piece { piece_type: King, is_white: true }),
+            None, None, None,
+
+            Some(Piece { piece_type: Queen, is_white: false }),
+            None, None, None, None, None,
+            Some(Piece { piece_type: Bishop, is_white: false }),
+            None
+        ]
     }
 }

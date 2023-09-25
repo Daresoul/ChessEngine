@@ -11,6 +11,8 @@ pub mod game {
     pub struct Game {
         pub board: Board,
         pub is_white_turn: bool,
+        pub white_king_position: u8,
+        pub black_king_position: u8,
         pub white_king_moved: bool,
         pub black_king_moved: bool,
         pub white_rook_left_moved: bool,
@@ -30,6 +32,8 @@ pub mod game {
                 white_rook_right_moved: false,
                 black_rook_left_moved: false,
                 black_rook_right_moved: false,
+                white_king_position: 60,
+                black_king_position: 4,
             }
        }
 
@@ -43,12 +47,15 @@ pub mod game {
                 white_rook_right_moved: false,
                 black_rook_left_moved: false,
                 black_rook_right_moved: false,
+                white_king_position: 60,
+                black_king_position: 4,
             }
        }
 
         pub fn new_from_string(state: String, is_white_turn: bool) -> Game {
+            let (white_king, black_king, board) = Game::transform_string_to_state(state);
             Game {
-                board: Board::new_from_arr(Game::transform_string_to_state(state)),
+                board: Board::new_from_arr(board),
                 is_white_turn: is_white_turn,
                 white_king_moved: false,
                 black_king_moved: false,
@@ -56,13 +63,17 @@ pub mod game {
                 white_rook_right_moved: false,
                 black_rook_left_moved: false,
                 black_rook_right_moved: false,
+                white_king_position: white_king,
+                black_king_position: black_king,
             }
         }
 
         // Forsyth–Edwards Notation
-        pub fn transform_string_to_state(state: String) -> [Option<Piece>; 64] {
+        pub fn transform_string_to_state(state: String) -> (u8, u8, [Option<Piece>; 64]) {
             let mut board: [Option<Piece>; 64] = [None; 64];
-            let mut board_index = 0;
+            let mut white_king = 0;
+            let mut black_king = 0;
+            let mut board_index: u8 = 0;
 
             for c in state.chars() {
                 if board_index > 63 {
@@ -77,22 +88,22 @@ pub mod game {
                     '6' => board_index += 6,
                     '7' => board_index += 7,
                     '8' => board_index += 8,
-                    'P' => {board[board_index] = Some(Piece { piece_type: Pawn, is_white: true}); board_index += 1},
-                    'p' => {board[board_index] = Some(Piece { piece_type: Pawn, is_white: false}); board_index += 1},
-                    'R' => {board[board_index] = Some(Piece { piece_type: Rook, is_white: true}); board_index += 1},
-                    'r' => {board[board_index] = Some(Piece { piece_type: Rook, is_white: false}); board_index += 1},
-                    'N' => {board[board_index] = Some(Piece { piece_type: Knight, is_white: true}); board_index += 1},
-                    'n' => {board[board_index] = Some(Piece { piece_type: Knight, is_white: false}); board_index += 1},
-                    'B' => {board[board_index] = Some(Piece { piece_type: Bishop, is_white: true}); board_index += 1},
-                    'b' => {board[board_index] = Some(Piece { piece_type: Bishop, is_white: false}); board_index += 1},
-                    'Q' => {board[board_index] = Some(Piece { piece_type: Queen, is_white: true}); board_index += 1},
-                    'q' => {board[board_index] = Some(Piece { piece_type: Queen, is_white: false}); board_index += 1},
-                    'K' => {board[board_index] = Some(Piece { piece_type: King, is_white: true}); board_index += 1},
-                    'k' => {board[board_index] = Some(Piece { piece_type: King, is_white: false}); board_index += 1},
+                    'P' => {board[usize::from(board_index)] = Some(Piece { piece_type: Pawn, is_white: true}); board_index += 1},
+                    'p' => {board[usize::from(board_index)] = Some(Piece { piece_type: Pawn, is_white: false}); board_index += 1},
+                    'R' => {board[usize::from(board_index)] = Some(Piece { piece_type: Rook, is_white: true}); board_index += 1},
+                    'r' => {board[usize::from(board_index)] = Some(Piece { piece_type: Rook, is_white: false}); board_index += 1},
+                    'N' => {board[usize::from(board_index)] = Some(Piece { piece_type: Knight, is_white: true}); board_index += 1},
+                    'n' => {board[usize::from(board_index)] = Some(Piece { piece_type: Knight, is_white: false}); board_index += 1},
+                    'B' => {board[usize::from(board_index)] = Some(Piece { piece_type: Bishop, is_white: true}); board_index += 1},
+                    'b' => {board[usize::from(board_index)] = Some(Piece { piece_type: Bishop, is_white: false}); board_index += 1},
+                    'Q' => {board[usize::from(board_index)] = Some(Piece { piece_type: Queen, is_white: true}); board_index += 1},
+                    'q' => {board[usize::from(board_index)] = Some(Piece { piece_type: Queen, is_white: false}); board_index += 1},
+                    'K' => {board[usize::from(board_index)] = Some(Piece { piece_type: King, is_white: true}); white_king = board_index; board_index += 1},
+                    'k' => {board[usize::from(board_index)] = Some(Piece { piece_type: King, is_white: false}); black_king = board_index; board_index += 1},
                     _ => continue
                 };
             }
-            board
+            (white_king, black_king, board)
         }
 
         pub fn check_attack_castle_white(&self, moves: &Vec<MoveType>) -> (bool, bool) {
@@ -271,20 +282,20 @@ pub mod game {
             moves
         }
 
-        pub fn get_all_moves(&self) -> (Vec<MoveType>, Vec<MoveType>) {
-            let mut moves: Vec<MoveType> = vec![];
+        pub fn get_all_moves(&self) -> (Vec<MoveType>, Vec<MoveType>, Vec<MoveType>) {
+            let mut white_moves: Vec<MoveType> = vec![];
+            let mut black_moves: Vec<MoveType> = vec![];
             let mut defence: Vec<MoveType> = vec![];
-            moves.reserve(500);
+            white_moves.reserve(500);
+            black_moves.reserve(500);
             defence.reserve(100);
 
 
             for i in 0..64 {
                 match self.board.board_state[i] {
                     Some(piece) => {
-                        let (mut piece_moves, mut piece_defense_moves) =
-                            piece.get_moves(&self.board, &(i as u8));
-                        moves.append( &mut piece_moves);
-                        defence.append( &mut piece_defense_moves);
+                        let mut moves = if piece.is_white { &mut white_moves } else { &mut black_moves };
+                        piece.get_moves(&self.board, &(i as u8), &mut moves, &mut defence);
                     },
                     None => ()
                 }
@@ -295,9 +306,9 @@ pub mod game {
                 match self.board.board_state[60] {
                     Some(piece) => {
                         if piece.piece_type == King && piece.is_white == true {
-                            let mut white_castle = self.castle_white(&moves);
+                            let mut white_castle = self.castle_white(&black_moves);
                             if white_castle.len() > 0 {
-                                moves.append(&mut white_castle);
+                                white_moves.append(&mut white_castle);
                             }
                         }
                     },
@@ -307,16 +318,30 @@ pub mod game {
                 match self.board.board_state[4] {
                     Some(piece) => {
                         if piece.piece_type == King && piece.is_white == false {
-                            let mut black_castle = self.castle_black(&moves);
+                            let mut black_castle = self.castle_black(&white_moves);
                             if black_castle.len() > 0 {
-                                moves.append(&mut black_castle);
+                                black_moves.append(&mut black_castle);
                             }
                         }
                     },
                     None => ()
                 }
             }
-            (moves, defence)
+            match self.board.board_state[usize::from(self.white_king_position)] {
+                Some(piece) => {
+                    piece.king_moves(&self.board, &self.white_king_position, &mut white_moves, &mut defence)
+                },
+                _ => ()//panic!("White king not at correct position.")
+            }
+
+            match self.board.board_state[usize::from(self.black_king_position)] {
+                Some(piece) => {
+                    piece.king_moves(&self.board, &self.black_king_position, &mut black_moves, &mut defence)
+                },
+                _ => ()//panic!("Black king not at correct position.")
+            }
+
+            (white_moves, black_moves, defence)
         }
 
         fn piece_value_mg(&self, piece: Piece, is_mg: bool) -> (i32, i32) {
@@ -553,10 +578,13 @@ pub mod game {
                     self.board.make_move(usize::from(*king_from), usize::from(*king_to), chosen_move);
                     self.board.make_move(usize::from(*rook_from), usize::from(*rook_to), chosen_move);
                     self.is_white_turn = !self.is_white_turn;
+
                     if *color {
                         self.white_king_moved = true;
+                        self.white_king_position = *king_to
                     } else {
                         self.black_king_moved = true;
+                        self.black_king_position = *king_to
                     }
                     return true;
                 }
@@ -566,7 +594,7 @@ pub mod game {
                         self.is_white_turn = !self.is_white_turn;
 
                         self.rook_move(p, from, color);
-                        self.king_move(p, color);
+                        self.king_move(p, color, to);
                         return true;
                     }
                     panic!("Piece cannot move there.")
@@ -592,7 +620,7 @@ pub mod game {
                     }
 
                     self.rook_move(p, from, color);
-                    self.king_move(p, color);
+                    self.king_move(p, color, to);
                     return true;
                 },
                 Defend(_p, _from, _to, _d, _color) => {
@@ -601,11 +629,13 @@ pub mod game {
             }
         }
 
-        fn king_move(&mut self, p: &PieceType, color: &bool) {
+        fn king_move(&mut self, p: &PieceType, color: &bool, to: &u8) {
             if *p == King {
                 if *color {
+                    self.white_king_position = *to;
                     self.white_king_moved = true;
                 } else {
+                    self.black_king_position = *to;
                     self.black_king_moved = true;
                 }
             }

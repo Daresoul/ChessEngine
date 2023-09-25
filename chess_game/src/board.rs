@@ -489,23 +489,6 @@ pub mod board {
             return board.board_state[position as usize];
         }
 
-        pub fn move_piece(game: Game, from: u8, _to: u8) -> Game {
-            if Board::get_board_state_from_position(&game.board, &from) {
-                let _piece: Option<Piece> = Board::get_piece_from_position(&game.board, from);
-            }
-
-            return Game {
-                board: game.board,
-                is_white_turn: true,
-                white_king_moved: false,
-                black_king_moved: false,
-                white_rook_left_moved: false,
-                white_rook_right_moved: false,
-                black_rook_left_moved: false,
-                black_rook_right_moved: false,
-            };
-        }
-
         pub fn get_board_state_from_position(board: &Board, position: &u8) -> bool {
             if *position > 63 {
                 return false;

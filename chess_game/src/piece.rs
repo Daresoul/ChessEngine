@@ -147,20 +147,18 @@ pub mod piece {
             self.piece_type.get_piece_type_value(is_mg)
         }
 
-        pub fn get_moves(&self, board: &Board, index: &u8) -> (Vec<MoveType>, Vec<MoveType>) {
+        pub fn get_moves(&self, board: &Board, index: &u8, moves: &mut Vec<MoveType>, defence: &mut Vec<MoveType>) -> () {
             match self.piece_type {
-                Pawn => self.pawn_moves(board, index),
-                Rook => self.rook_moves(board, index, Rook),
-                Bishop => self.bishop_moves(board, index, Bishop),
-                King => self.king_moves(board, index),
-                Knight => self.knight_moves(board, index),
-                Queen => self.queen_moves(board, index)
+                Pawn => self.pawn_moves(board, index, moves, defence),
+                Rook => self.rook_moves(board, index, moves, defence, Rook),
+                Bishop => self.bishop_moves(board, index, moves, defence,Bishop),
+                Knight => self.knight_moves(board, index, moves, defence),
+                Queen => self.queen_moves(board, index, moves, defence),
+                _ => ()
             }
         }
 
-        fn pawn_moves(&self, board: &Board, index: &u8) -> (Vec<MoveType>, Vec<MoveType>) {
-            let mut moves: Vec<MoveType> = vec![];
-            let mut defence: Vec<MoveType> = vec![];
+        fn pawn_moves(&self, board: &Board, index: &u8, moves: &mut Vec<MoveType>, defence: &mut Vec<MoveType>) -> () {
 
             // Move straight
             let straight_move = if self.is_white {index.checked_sub(8)} else {index.checked_add(8)};
@@ -248,9 +246,6 @@ pub mod piece {
                     moves.push(MoveType::Standard(*index, double_move, self.is_white));
                 }
             }
-
-            // Return
-            (moves, defence)
         }
 
         fn rook_move(&self, board: &Board, from: u8, index: u8, count: &u8, piece_type: PieceType) -> (u8, Option<MoveType>) {
@@ -285,9 +280,14 @@ pub mod piece {
             }
         }
 
-        pub fn rook_moves(&self, board: &Board, index: &u8, piece_type: PieceType) -> (Vec<MoveType>, Vec<MoveType>) {
-            let mut moves: Vec<MoveType> = vec![];
-            let mut defence: Vec<MoveType> = vec![];
+        pub fn rook_moves(
+            &self,
+            board: &Board,
+            index: &u8,
+            moves: &mut Vec<MoveType>,
+            defence: &mut Vec<MoveType>,
+            piece_type: PieceType
+        ) -> () {
 
             // Counts are for option types
             let mut count_up = 0;
@@ -392,13 +392,15 @@ pub mod piece {
                     }
                 }
             }
-
-            (moves, defence)
         }
 
-        pub fn king_moves(&self, board: &Board, index: &u8) -> (Vec<MoveType>, Vec<MoveType>) {
-            let mut moves: Vec<MoveType> = vec![];
-            let mut defence: Vec<MoveType> = vec![];
+        pub fn king_moves(
+            &self,
+            board: &Board,
+            index: &u8,
+            moves: &mut Vec<MoveType>,
+            defence: &mut Vec<MoveType>
+        ) -> () {
 
             let king_move_indexes: [Option<u8>; 8] = [
                 index.checked_sub(1), index.checked_sub(9), index.checked_sub(8),
@@ -460,8 +462,6 @@ pub mod piece {
                     None => {}
                 }
             }
-
-            (moves, defence)
         }
 
         fn bishop_move(&self, board: &Board, from: u8, index: u8, count: &u8, piece_type: PieceType) -> (u8, Option<MoveType>) {
@@ -497,9 +497,14 @@ pub mod piece {
             }
         }
 
-        pub fn bishop_moves(&self, board: &Board, index: &u8, piece_type: PieceType) -> (Vec<MoveType>, Vec<MoveType>) {
-            let mut moves = vec![];
-            let mut defence = vec![];
+        pub fn bishop_moves(
+            &self,
+            board: &Board,
+            index: &u8,
+            moves: &mut Vec<MoveType>,
+            defence: &mut Vec<MoveType>,
+            piece_type: PieceType
+        ) -> () {
 
             let mut diagonal_up_right = 0;
             let mut diagonal_up_left = 0;
@@ -603,14 +608,16 @@ pub mod piece {
                     }
                 }
             }
-
-            return (moves, defence);
         }
 
 
-        pub fn knight_moves(&self, board: &Board, index: &u8) -> (Vec<MoveType>, Vec<MoveType>) {
-            let mut moves: Vec<MoveType> = vec![];
-            let mut defend: Vec<MoveType> = vec![];
+        pub fn knight_moves(
+            &self,
+            board: &Board,
+            index: &u8,
+            moves: &mut Vec<MoveType>,
+            defence: &mut Vec<MoveType>
+        ) -> () {
 
             let knight_move_indexes: [Option<u8>; 8] = [
                 index.checked_sub(6), index.checked_sub(10), index.checked_sub(15),
@@ -669,7 +676,7 @@ pub mod piece {
                                         );
                                     }
                                     else {
-                                        defend.push(
+                                        defence.push(
                                             MoveType::Defend(
                                                 Knight,
                                                 *index,
@@ -690,16 +697,17 @@ pub mod piece {
                     None => {}
                 }
             }
-            (moves, defend)
         }
 
-        pub fn queen_moves(&self, board: &Board, index: &u8) -> (Vec<MoveType>, Vec<MoveType>) {
-            let (mut moves, mut defence) = self.bishop_moves(board, index, Queen);
-            let (mut rook_moves, mut rook_defence) = self.rook_moves(board, index, Queen);
-            moves.append(&mut rook_moves);
-            defence.append(&mut rook_defence);
-
-            (moves, defence)
+        pub fn queen_moves(
+            &self,
+            board: &Board,
+            index: &u8,
+            moves: &mut Vec<MoveType>,
+            defence: &mut Vec<MoveType>
+        ) -> () {
+            self.bishop_moves(board, index, moves, defence, Queen);
+            self.rook_moves(board, index, moves, defence,Queen);
         }
 
 
