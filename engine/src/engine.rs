@@ -208,18 +208,12 @@ pub(crate) mod engine {
 
             let mut tr: TurnResult;
             let board_hash = game.board.compute_hash();
-            //println!("board_hash: {}", board_hash);
-            if board_hash == 15449896517834521811 {
-                println!("board_hash: {}", board_hash);
-                print_board(game)
-            }
             match map.get_mut(&board_hash) {
                 Some(pos) => {
                     tr = pos.tr.clone();
                 }
                 None => {
                     tr = game.get_all_moves();
-                    println!("{}", mem::size_of::<PositionInfo>());
                     let pi = PositionInfo {
                         tr: tr.clone(),
                         val: None
