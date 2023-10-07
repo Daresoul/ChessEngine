@@ -4,6 +4,7 @@ pub mod piece {
     use std::path::is_separator;
     use crate::board::board::Board;
     use crate::board::board::MoveType;
+    use crate::game::game::KingCapture;
     use crate::piece::piece::PieceType::{Bishop, King, Knight, Pawn, Queen, Rook};
 
     #[derive(Debug, Clone, Copy)]
@@ -147,18 +148,19 @@ pub mod piece {
             self.piece_type.get_piece_type_value(is_mg)
         }
 
-        pub fn get_moves(&self, board: &Board, index: &u8, moves: &mut Vec<MoveType>, defence: &mut Vec<MoveType>) -> () {
+        pub fn get_moves(&self, board: &Board, index: &u8, moves: &mut Vec<MoveType>, defence: &mut Vec<MoveType>, kings_capture: &mut Vec<KingCapture>) -> usize {
             match self.piece_type {
-                Pawn => self.pawn_moves(board, index, moves, defence),
-                Rook => self.rook_moves(board, index, moves, defence, Rook),
-                Bishop => self.bishop_moves(board, index, moves, defence,Bishop),
-                Knight => self.knight_moves(board, index, moves, defence),
-                Queen => self.queen_moves(board, index, moves, defence),
-                _ => ()
+                Pawn => self.pawn_moves(board, index, moves, defence, kings_capture),
+                Rook => self.rook_moves(board, index, moves, defence, kings_capture, Rook),
+                Bishop => self.bishop_moves(board, index, moves, defence, kings_capture,Bishop),
+                Knight => self.knight_moves(board, index, moves, defence, kings_capture),
+                Queen => self.queen_moves(board, index, moves, defence, kings_capture),
+                _ => 0
             }
         }
 
-        fn pawn_moves(&self, board: &Board, index: &u8, moves: &mut Vec<MoveType>, defence: &mut Vec<MoveType>) -> () {
+        fn pawn_moves(&self, board: &Board, index: &u8, moves: &mut Vec<MoveType>, defence: &mut Vec<MoveType>, kings_capture: &mut Vec<KingCapture>) -> usize {
+            let mut counter = 0;
 
             // Move straight
             let straight_move = if self.is_white {index.checked_sub(8)} else {index.checked_add(8)};
@@ -168,6 +170,7 @@ pub mod piece {
                     if !Board::get_board_state_from_position(board, &move_val) {
                         if move_val < 64 {
                             moves.push(MoveType::Standard(*index, move_val, self.is_white));
+                            counter += 1;
                         }
                     }
                 }
@@ -187,10 +190,18 @@ pub mod piece {
                             match board.board_state[usize::from(move_val)] {
                                 Some(piece) => {
                                     if piece.is_white != self.is_white && move_val < 64 {
-                                        moves.push(MoveType::Attack(Pawn, *index, move_val, true, self.is_white));
+                                        if piece.piece_type == King {
+                                            kings_capture.push(KingCapture {
+                                                piece: *self,
+                                                position: *index
+                                            })
+                                        }
+                                        moves.push(MoveType::Capture(Pawn, *index, move_val, piece.piece_type, self.is_white));
+                                        counter += 1;
                                     } else {
                                         if move_val < 64 {
                                             defence.push(MoveType::Defend(Pawn, *index, move_val, piece.piece_type, self.is_white));
+                                            counter += 1;
                                         }
                                     }
                                 },
@@ -215,10 +226,18 @@ pub mod piece {
                                 match board.board_state[usize::from(move_value)] {
                                     Some(piece) => {
                                         if piece.is_white != self.is_white && move_value < 64 {
-                                            moves.push(MoveType::Attack(Pawn, *index, move_value, true, self.is_white));
+                                            if piece.piece_type == King {
+                                                kings_capture.push(KingCapture {
+                                                    piece: *self,
+                                                    position: *index
+                                                })
+                                            }
+                                            moves.push(MoveType::Capture(Pawn, *index, move_value, piece.piece_type, self.is_white));
+                                            counter += 1;
                                         } else {
                                             if move_value < 64 {
                                                 defence.push(MoveType::Defend(Pawn, *index, move_value, piece.piece_type, self.is_white));
+                                                counter += 1;
                                             }
                                         }
                                     },
@@ -237,6 +256,7 @@ pub mod piece {
                 let double_move = *index - 16;
                 if !Board::get_board_state_from_position(board, &double_move) {
                     moves.push(MoveType::Standard(*index, double_move, self.is_white));
+                    counter += 1;
                 }
 
             }
@@ -244,17 +264,21 @@ pub mod piece {
                 let double_move = *index + 16;
                 if !Board::get_board_state_from_position(board, &double_move) {
                     moves.push(MoveType::Standard(*index, double_move, self.is_white));
+                    counter += 1;
                 }
             }
+
+            counter
         }
 
         fn rook_move(&self, board: &Board, from: u8, index: u8, count: &u8, piece_type: PieceType) -> (u8, Option<MoveType>) {
+
             if Board::get_board_state_from_position(board, &index) {
                 match board.board_state[usize::from(index)] {
                     Some(piece) => {
                         if piece.is_white != self.is_white {
                             let rook_move = if *count == 0 {
-                                MoveType::Attack(piece_type, from,index, true,self.is_white)
+                                MoveType::Capture(piece_type, from,index, piece.piece_type,self.is_white)
                             } else {
                                 MoveType::FutureMove(piece_type,from,index, self.is_white)
                             };
@@ -286,8 +310,11 @@ pub mod piece {
             index: &u8,
             moves: &mut Vec<MoveType>,
             defence: &mut Vec<MoveType>,
+            kings_capture: &mut Vec<KingCapture>,
             piece_type: PieceType
-        ) -> () {
+        ) -> usize {
+
+            let mut counter = 0;
 
             // Counts are for option types
             let mut count_up = 0;
@@ -306,8 +333,18 @@ pub mod piece {
                             match rook_up_move {
                                 Some(move_type) =>
                                     match move_type {
-                                        MoveType::Defend(_, _, _, _, _) => defence.push(move_type),
-                                        _ => moves.push(move_type)
+                                        MoveType::Defend(_, _, _, _, _) => {defence.push(move_type); counter += 1},
+                                        MoveType::Capture(_p, _f, _t, cp, _c) => {
+                                            if cp == King {
+                                                kings_capture.push(KingCapture {
+                                                    piece: *self,
+                                                    position: *index
+                                                })
+                                            }
+                                            moves.push(move_type);
+                                            counter += 1;
+                                        }
+                                        _ => {moves.push(move_type); counter += 1}
                                     },
                                 None => {}
                             }
@@ -330,8 +367,18 @@ pub mod piece {
                                 match rook_down_move {
                                     Some(move_type) =>
                                         match move_type {
-                                            MoveType::Defend(_, _, _, _, _) => defence.push(move_type),
-                                            _ => moves.push(move_type)
+                                            MoveType::Defend(_, _, _, _, _) => {defence.push(move_type); counter += 1},
+                                            MoveType::Capture(_p, _f, _t, cp, _c) => {
+                                                if cp == King {
+                                                    kings_capture.push(KingCapture {
+                                                        piece: *self,
+                                                        position: *index
+                                                    })
+                                                }
+                                                moves.push(move_type);
+                                                counter += 1;
+                                            }
+                                            _ => { moves.push(move_type); counter += 1}
                                         },
                                     None => {}
                                 }
@@ -356,8 +403,18 @@ pub mod piece {
                                 match rook_right_move {
                                     Some(move_type) =>
                                         match move_type {
-                                            MoveType::Defend(_, _, _, _, _) => defence.push(move_type),
-                                            _ => moves.push(move_type)
+                                            MoveType::Defend(_, _, _, _, _) => {defence.push(move_type); counter += 1},
+                                            MoveType::Capture(_p, _f, _t, cp, _c) => {
+                                                if cp == King {
+                                                    kings_capture.push(KingCapture {
+                                                        piece: *self,
+                                                        position: *index
+                                                    })
+                                                }
+                                                moves.push(move_type);
+                                                counter += 1;
+                                            }
+                                            _ => { moves.push(move_type); counter += 1}
                                         },
                                     None => {}
                                 }
@@ -381,8 +438,18 @@ pub mod piece {
                                 match rook_left_move {
                                     Some(move_type) =>
                                         match move_type {
-                                            MoveType::Defend(_, _, _, _, _) => defence.push(move_type),
-                                            _ => moves.push(move_type)
+                                            MoveType::Defend(_, _, _, _, _) => {defence.push(move_type); counter += 1},
+                                            MoveType::Capture(_p, _f, _t, cp, _c) => {
+                                                if cp == King {
+                                                    kings_capture.push(KingCapture {
+                                                        piece: *self,
+                                                        position: *index
+                                                    })
+                                                }
+                                                moves.push(move_type);
+                                                counter += 1;
+                                            }
+                                            _ => { moves.push(move_type); counter += 1}
                                         },
                                     None => {}
                                 }
@@ -392,6 +459,8 @@ pub mod piece {
                     }
                 }
             }
+
+            counter
         }
 
         pub fn king_moves(
@@ -400,7 +469,7 @@ pub mod piece {
             index: &u8,
             moves: &mut Vec<MoveType>,
             defence: &mut Vec<MoveType>
-        ) -> () {
+        ) -> usize {
 
             let king_move_indexes: [Option<u8>; 8] = [
                 index.checked_sub(1), index.checked_sub(9), index.checked_sub(8),
@@ -462,6 +531,8 @@ pub mod piece {
                     None => {}
                 }
             }
+
+            0
         }
 
         fn bishop_move(&self, board: &Board, from: u8, index: u8, count: &u8, piece_type: PieceType) -> (u8, Option<MoveType>) {
@@ -503,8 +574,11 @@ pub mod piece {
             index: &u8,
             moves: &mut Vec<MoveType>,
             defence: &mut Vec<MoveType>,
+            kings_capture: &mut Vec<KingCapture>,
             piece_type: PieceType
-        ) -> () {
+        ) -> usize {
+
+            let mut counter = 0;
 
             let mut diagonal_up_right = 0;
             let mut diagonal_up_left = 0;
@@ -523,8 +597,18 @@ pub mod piece {
                                 diagonal_up_right += added;
                                 match bishop_up_right_move {
                                     Some(move_type) => match move_type {
-                                        MoveType::Defend(_, _, _, _, _) => defence.push(move_type),
-                                        _ => moves.push(move_type)
+                                        MoveType::Defend(_, _, _, _, _) => {defence.push(move_type); counter += 1},
+                                        MoveType::Capture(_p, _f, _t, cp, _c) => {
+                                            if cp == King {
+                                                kings_capture.push(KingCapture {
+                                                    piece: *self,
+                                                    position: *index
+                                                })
+                                            }
+                                            moves.push(move_type);
+                                            counter += 1;
+                                        }
+                                        _ => {moves.push(move_type); counter += 1}
                                     },
                                     None => {}
                                 }
@@ -546,8 +630,18 @@ pub mod piece {
                                 match bishop_up_left_move {
                                     Some(move_type) =>
                                         match move_type {
-                                            MoveType::Defend(_, _, _, _, _) => defence.push(move_type),
-                                            _ => moves.push(move_type)
+                                            MoveType::Defend(_, _, _, _, _) => {defence.push(move_type); counter += 1},
+                                            MoveType::Capture(_p, _f, _t, cp, _c) => {
+                                                if cp == King {
+                                                    kings_capture.push(KingCapture {
+                                                        piece: *self,
+                                                        position: *index
+                                                    })
+                                                }
+                                                moves.push(move_type);
+                                                counter += 1;
+                                            }
+                                            _ => {moves.push(move_type); counter += 1}
                                         },
                                     None => {}
                                 }
@@ -572,8 +666,18 @@ pub mod piece {
                                 match bishop_down_right_move {
                                     Some(move_type) =>
                                         match move_type {
-                                            MoveType::Defend(_, _, _, _, _) => defence.push(move_type),
-                                            _ => moves.push(move_type)
+                                            MoveType::Defend(_, _, _, _, _) => {defence.push(move_type); counter += 1},
+                                            MoveType::Capture(_p, _f, _t, cp, _c) => {
+                                                if cp == King {
+                                                    kings_capture.push(KingCapture {
+                                                        piece: *self,
+                                                        position: *index
+                                                    })
+                                                }
+                                                moves.push(move_type);
+                                                counter += 1;
+                                            }
+                                            _ => {moves.push(move_type); counter += 1}
                                         },
                                     None => {}
                                 }
@@ -597,8 +701,18 @@ pub mod piece {
                                 match bishop_down_left_move {
                                     Some(move_type) =>
                                         match move_type {
-                                            MoveType::Defend(_, _, _, _, _) => defence.push(move_type),
-                                            _ => moves.push(move_type)
+                                            MoveType::Defend(_, _, _, _, _) => {defence.push(move_type); counter += 1},
+                                            MoveType::Capture(_p, _f, _t, cp, _c) => {
+                                                if cp == King {
+                                                    kings_capture.push(KingCapture {
+                                                        piece: *self,
+                                                        position: *index
+                                                    })
+                                                }
+                                                moves.push(move_type);
+                                                counter += 1;
+                                            }
+                                            _ => {moves.push(move_type); counter += 1}
                                         },
                                     None => {}
                                 }
@@ -608,6 +722,8 @@ pub mod piece {
                     }
                 }
             }
+
+            counter
         }
 
 
@@ -616,8 +732,11 @@ pub mod piece {
             board: &Board,
             index: &u8,
             moves: &mut Vec<MoveType>,
-            defence: &mut Vec<MoveType>
-        ) -> () {
+            defence: &mut Vec<MoveType>,
+            kings_capture: &mut Vec<KingCapture>
+        ) -> usize {
+
+            let mut counter = 0;
 
             let knight_move_indexes: [Option<u8>; 8] = [
                 index.checked_sub(6), index.checked_sub(10), index.checked_sub(15),
@@ -665,15 +784,22 @@ pub mod piece {
                             match board.board_state[usize::from(val)] {
                                 Some(piece) => {
                                     if piece.is_white != self.is_white {
+                                        if piece.piece_type == King {
+                                            kings_capture.push(KingCapture {
+                                                piece: *self,
+                                                position: *index
+                                            })
+                                        }
                                         moves.push(
-                                            MoveType::Attack(
+                                            MoveType::Capture(
                                                 Knight,
                                                 *index,
                                                 val,
-                                                true,
+                                                piece.piece_type,
                                                 self.is_white
                                             )
                                         );
+                                        counter += 1;
                                     }
                                     else {
                                         defence.push(
@@ -685,6 +811,7 @@ pub mod piece {
                                                 self.is_white
                                             )
                                         );
+                                        counter += 1;
                                     }
                                 },
                                 None => panic!("Should never happen")
@@ -692,11 +819,14 @@ pub mod piece {
                         }
                         else {
                             moves.push(MoveType::Attack(Knight, *index,val, true,self.is_white));
+                            counter += 1;
                         }
                     },
                     None => {}
                 }
             }
+
+            counter
         }
 
         pub fn queen_moves(
@@ -704,10 +834,12 @@ pub mod piece {
             board: &Board,
             index: &u8,
             moves: &mut Vec<MoveType>,
-            defence: &mut Vec<MoveType>
-        ) -> () {
-            self.bishop_moves(board, index, moves, defence, Queen);
-            self.rook_moves(board, index, moves, defence,Queen);
+            defence: &mut Vec<MoveType>,
+            kings_capture: &mut Vec<KingCapture>
+        ) -> usize {
+            let mut counter = self.bishop_moves(board, index, moves, defence, kings_capture,Queen);
+            counter += self.rook_moves(board, index, moves, defence, kings_capture,Queen);
+            counter
         }
 
 

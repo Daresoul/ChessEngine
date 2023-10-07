@@ -2,9 +2,11 @@ pub(crate) mod engine {
     use std::cmp::Ordering;
     use std::collections::HashMap;
     use std::fmt::{Debug};
-    use std::iter::once_with;
+    use std::mem;
+    use std::mem::size_of;
     use chess_game::board::board::MoveType;
-    use chess_game::game::game::Game;
+    use chess_game::debug::debug::print_board;
+    use chess_game::game::game::{Game, TurnResult};
     use chess_game::piece::piece::PieceType::Pawn;
     use crate::game_tree::game_tree::GameTree;
 
@@ -13,6 +15,11 @@ pub(crate) mod engine {
         pub m: MoveType,
         pub val: i32,
         pub leafs: usize
+    }
+
+    pub struct PositionInfo {
+        pub tr: TurnResult,
+        pub val: Option<i32>
     }
 
     impl Eq for Branch {}
@@ -44,16 +51,16 @@ pub(crate) mod engine {
         pub(crate) fn build_tree(game: & mut Game, parent: &mut GameTree, maximizing_player: bool, depth: usize) -> i32 {
             let is_white_turn = game.is_white_turn;
 
-            let (all_moves, defence_moves) = game.get_all_moves();
+            let tr = game.get_all_moves();
 
             if depth == 0 {
-                return game.evaluate_board(&all_moves);
+                    return game.evaluate_board(&tr);
             }
 
             if is_white_turn == maximizing_player {
                 let mut max_eval = i32::MIN;
 
-                for m in all_moves.iter() {
+                for m in tr.white_moves.iter() {
                     if Engine::should_skip_move(*m, is_white_turn) {
                         continue;
                     }
@@ -64,7 +71,7 @@ pub(crate) mod engine {
                     let mut new_node: GameTree = GameTree::new(Some(*m));
                     let eval = Engine::build_tree(&mut new_game, &mut new_node, !maximizing_player, depth - 1);
 
-                    let board_eval = new_game.evaluate_board(&all_moves);
+                    let board_eval = new_game.evaluate_board(&tr);
 
                     new_node.set_board_evals(board_eval, eval);
                     parent.add(new_node);
@@ -77,7 +84,7 @@ pub(crate) mod engine {
             else {
                 let mut min_eval = i32::MAX;
 
-                for m in all_moves.iter() {
+                for m in tr.black_moves.iter() {
                     if Engine::should_skip_move(*m, is_white_turn) {
                         continue;
                     }
@@ -88,7 +95,7 @@ pub(crate) mod engine {
                     let mut new_node: GameTree = GameTree::new(Some(*m));
                     let eval = Engine::build_tree(&mut new_game, &mut new_node, !maximizing_player, depth - 1);
 
-                    let board_eval = new_game.evaluate_board(&all_moves);
+                    let board_eval = new_game.evaluate_board(&tr);
 
                     new_node.set_board_evals(board_eval, eval);
                     parent.add(new_node);
@@ -100,7 +107,7 @@ pub(crate) mod engine {
             }
         }
 
-        pub fn get_sorted_moves(game: &mut Game, map: &mut HashMap<u64, i32>, is_maximizing: bool, depth: usize, with_sorting: bool) -> (Vec<Branch>, usize) {
+        pub fn get_sorted_moves(game: &mut Game, map: &mut HashMap<u64, PositionInfo>, is_maximizing: bool, depth: usize, with_sorting: bool) -> (Vec<Branch>, usize) {
             let mut sorted_moves: Vec<Branch> = vec![];
 
             let mut alpha = i32::MIN;
@@ -108,56 +115,73 @@ pub(crate) mod engine {
 
             let mut all_leafs = 0;
 
-            let (mut all_moves, defence_moves) = game.get_all_moves();
+            let tr = game.get_all_moves();
+
+            let mut stopped: bool = false;
 
             //all_moves.sort_by(Engine::middle_game_sort());
 
             if is_maximizing {
-                for mv in all_moves.iter() {
+                for mv in tr.white_moves.iter() {
                     if Engine::should_skip_move(*mv, game.is_white_turn) {
                         continue
                     }
 
-                    let mut new_game = game.clone();
-                    new_game.make_move(mv);
+                    if !stopped {
+                        let mut new_game = game.clone();
+                        new_game.make_move(mv);
 
-                    let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth, with_sorting);
+                        let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth, with_sorting);
 
-                    sorted_moves.push(Branch {
-                        m: *mv,
-                        val: value,
-                        leafs
-                    });
-                    all_leafs = leafs;
+                        sorted_moves.push(Branch {
+                            m: *mv,
+                            val: value,
+                            leafs
+                        });
+                        all_leafs = leafs;
 
-                    alpha = alpha.max(value);
+                        alpha = alpha.max(value);
 
-                    if beta <= alpha {
-                        break;
+                        if beta <= alpha {
+                            stopped = true;
+                        }
+                    } else {
+                        sorted_moves.push(Branch {
+                            m: *mv,
+                            val: i32::MIN,
+                            leafs: 0
+                        });
                     }
                 }
             } else {
-                for mv in all_moves.iter() {
+                for mv in tr.black_moves.iter() {
                     if Engine::should_skip_move(*mv, game.is_white_turn) {
                         continue
                     }
+                    if !stopped {
+                        let mut new_game = game.clone();
+                        new_game.make_move(mv);
 
-                    let mut new_game = game.clone();
-                    new_game.make_move(mv);
+                        let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth, with_sorting);
 
-                    let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth, with_sorting);
+                        sorted_moves.push(Branch {
+                            m: *mv,
+                            val: value,
+                            leafs
+                        });
+                        all_leafs = leafs;
 
-                    sorted_moves.push(Branch {
-                        m: *mv,
-                        val: value,
-                        leafs
-                    });
-                    all_leafs = leafs;
+                        beta = beta.min(value);
 
-                    beta = beta.min(value);
-
-                    if beta <= alpha {
-                        break;
+                        if beta <= alpha {
+                            stopped = true;
+                        }
+                    } else {
+                        sorted_moves.push(Branch {
+                            m: *mv,
+                            val: i32::MIN,
+                            leafs: 0
+                        });
                     }
                 }
             }
@@ -172,7 +196,7 @@ pub(crate) mod engine {
 
         pub fn alpha_beta_from_internet(
             game: &Game,
-            map: &mut HashMap<u64, i32>,
+            map: &mut HashMap<u64, PositionInfo>,
             is_maximizing: bool,
             mut alpha: i32,
             mut beta: i32,
@@ -182,31 +206,80 @@ pub(crate) mod engine {
 
             let is_white_turn = game.is_white_turn;
 
-            let (mut all_moves, _) = game.get_all_moves();
-
-            if depth == 0 {
-                let board_hash = game.board.compute_hash();
-                match map.get(&board_hash) {
-                    Some(v) => {
-                        return (*v, 1)
-                    },
-                    None => {
-                        let value = game.evaluate_board(&all_moves);
-                        map.insert(board_hash, value);
-                        return (value, 1);
-                    }
+            let mut tr: TurnResult;
+            let board_hash = game.board.compute_hash();
+            //println!("board_hash: {}", board_hash);
+            if board_hash == 15449896517834521811 {
+                println!("board_hash: {}", board_hash);
+                print_board(game)
+            }
+            match map.get_mut(&board_hash) {
+                Some(pos) => {
+                    tr = pos.tr.clone();
+                }
+                None => {
+                    tr = game.get_all_moves();
+                    println!("{}", mem::size_of::<PositionInfo>());
+                    let pi = PositionInfo {
+                        tr: tr.clone(),
+                        val: None
+                    };
+                    map.insert(board_hash, pi);
+                    ()
                 }
             }
 
-            if with_sorting {
-                all_moves.sort_by(Engine::middle_game_sort());
+
+
+            if depth == 0 {
+                match map.get_mut(&board_hash) {
+                    Some(pos) => {
+                        match pos.val {
+                            Some(v) => return (v, 1),
+                            None => {
+                                if tr.gbi.is_check {
+                                    if is_white_turn {
+                                        if tr.white_moves.len() < 1 {
+                                            return (i32::MIN, 1)
+                                        } else {
+                                            let mut new_game = *game;
+                                            let (score, leave) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, 0, with_sorting);
+                                            return (score, leave)
+                                        }
+                                    } else {
+                                        if tr.black_moves.len() < 1 {
+                                            return (i32::MAX, 1)
+                                        } else {
+                                            let mut new_game = *game;
+                                            let (score, leave) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, 0, with_sorting);
+                                            return (score, leave)
+                                        }
+                                    }
+                                } else {
+                                    let value = game.evaluate_board(&tr);
+                                    pos.val = Some(value);
+                                    return (value, 1);
+                                }
+                            }
+                        }
+                    },
+                    None => {
+                        let value = game.evaluate_board(&tr);
+                        return (value, 1);
+                        panic!("No map generated?????")
+                    }
+                }
             }
 
             if is_maximizing {
                 let mut val = i32::MIN;
                 let mut leaves = 0;
 
-                for m in all_moves.iter() {
+                if with_sorting {
+                    tr.white_moves.sort_by(Engine::middle_game_sort());
+                }
+
+                for m in tr.white_moves.iter() {
                     if Engine::should_skip_move(*m, is_white_turn) {
                         continue;
                     }
@@ -230,7 +303,11 @@ pub(crate) mod engine {
                 let mut val = i32::MAX;
                 let mut leaves = 0;
 
-                for m in all_moves.iter() {
+                if with_sorting {
+                    tr.black_moves.sort_by(Engine::middle_game_sort());
+                }
+
+                for m in tr.black_moves.iter() {
                     if Engine::should_skip_move(*m, is_white_turn) {
                         continue;
                     }
@@ -316,13 +393,34 @@ pub(crate) mod engine {
                     MoveType::Capture(pt, _, _, cp, _) => {
                         match m2 {
                             MoveType::Standard(_, _, _) => {
-                                Ordering::Greater
+                                if pt.get_piece_type_value(true) < cp.get_piece_type_value(true) {
+                                    return Ordering::Greater
+                                }
+                                Ordering::Less
                             }
                             MoveType::Capture(cpt, _, _, ccp, _) => {
+                                if cpt.get_piece_type_value(true) <= ccp.get_piece_type_value(true)
+                                && pt.get_piece_type_value(true) <= cp.get_piece_type_value(true) {
+                                    if ccp.get_piece_type_value(true) - cpt.get_piece_type_value(true) <
+                                        cp.get_piece_type_value(true) - pt.get_piece_type_value(true) {
+                                        return Ordering::Less
+                                    } else {
+                                        return Ordering::Greater
+                                    }
+                                } else if cpt.get_piece_type_value(true) <= ccp.get_piece_type_value(true) {
+                                    return Ordering::Less
+                                }
+                                else if pt.get_piece_type_value(true) <= cp.get_piece_type_value(true) {
+                                    return Ordering::Greater
+                                }
+
                                 Ordering::Equal
                             }
                             MoveType::Attack(p, _, _, _, _) => {
-                                Ordering::Greater
+                                if pt.get_piece_type_value(true) <= cp.get_piece_type_value(true) {
+                                    return Ordering::Greater
+                                }
+                                Ordering::Less
                             }
                             MoveType::Castle(_, _, _, _, _) => Ordering::Less,
                             _ => Ordering::Greater

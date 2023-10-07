@@ -6,6 +6,37 @@ pub mod game {
     use crate::board::board::MoveType::{Attack, Capture, Castle, Standard};
     use crate::piece::piece::{Piece, PieceType};
     use crate::piece::piece::PieceType::{Bishop, King, Knight, Pawn, Queen, Rook};
+    use crate::game_board_info::game_board_info;
+    use crate::game_board_info::game_board_info::GameBoardInfo;
+
+    pub struct KingCapture {
+        pub piece: Piece,
+        pub position: u8
+    }
+
+    #[derive(Clone)]
+    pub struct TurnResult {
+        pub white_moves: Vec<MoveType>,
+        pub black_moves: Vec<MoveType>,
+        pub defence_moves: Vec<MoveType>,
+        pub gbi: GameBoardInfo
+    }
+
+    impl TurnResult {
+        pub fn new(
+            white_moves: Vec<MoveType>,
+            black_moves: Vec<MoveType>,
+            defence_moves: Vec<MoveType>,
+            gbi: GameBoardInfo
+        ) -> TurnResult {
+            TurnResult {
+                white_moves,
+                black_moves,
+                defence_moves,
+                gbi
+            }
+        }
+    }
 
     #[derive(Clone, Copy)]
     pub struct Game {
@@ -282,20 +313,67 @@ pub mod game {
             moves
         }
 
-        pub fn get_all_moves(&self) -> (Vec<MoveType>, Vec<MoveType>, Vec<MoveType>) {
+        pub fn get_all_moves(&self) -> TurnResult {
             let mut white_moves: Vec<MoveType> = vec![];
             let mut black_moves: Vec<MoveType> = vec![];
             let mut defence: Vec<MoveType> = vec![];
+            let mut kings_captures: Vec<KingCapture> = vec![];
             white_moves.reserve(500);
             black_moves.reserve(500);
             defence.reserve(100);
+            kings_captures.reserve(10);
+
+            let mut game_info: GameBoardInfo = GameBoardInfo::new();
 
 
             for i in 0..64 {
                 match self.board.board_state[i] {
                     Some(piece) => {
                         let mut moves = if piece.is_white { &mut white_moves } else { &mut black_moves };
-                        piece.get_moves(&self.board, &(i as u8), &mut moves, &mut defence);
+                        let move_count = piece.get_moves(&self.board, &(i as u8), &mut moves, &mut defence, &mut kings_captures);
+
+                        match piece.piece_type {
+                            Pawn => if piece.is_white {
+                                game_info.piece_count[0] += 1;
+                                game_info.move_count[0] += move_count;
+                            } else {
+                                game_info.piece_count[6] += 1;
+                                game_info.move_count[5] += move_count;
+                            }
+                            Bishop => if piece.is_white {
+                                game_info.piece_count[1] += 1;
+                                game_info.move_count[1] += move_count;
+                            } else {
+                                game_info.piece_count[7] += 1;
+                                game_info.move_count[6] += move_count;
+                            }
+                            Knight => if piece.is_white {
+                                game_info.piece_count[2] += 1;
+                                game_info.move_count[2] += move_count;
+                            } else {
+                                game_info.piece_count[8] += 1;
+                                game_info.move_count[7] += move_count;
+                            }
+                            Rook => if piece.is_white {
+                                game_info.piece_count[3] += 1;
+                                game_info.move_count[3] += move_count;
+                            } else {
+                                game_info.piece_count[9] += 1;
+                                game_info.move_count[8] += move_count;
+                            }
+                            Queen => if piece.is_white {
+                                game_info.piece_count[4] += 1;
+                                game_info.move_count[4] += move_count;
+                            } else {
+                                game_info.piece_count[10] += 1;
+                                game_info.move_count[9] += move_count;
+                            }
+                            King => if piece.is_white {
+                                game_info.move_count[5] += 1
+                            } else {
+                                game_info.move_count[11] += 1
+                            }
+                        }
                     },
                     None => ()
                 }
@@ -327,21 +405,91 @@ pub mod game {
                     None => ()
                 }
             }
+
             match self.board.board_state[usize::from(self.white_king_position)] {
                 Some(piece) => {
-                    piece.king_moves(&self.board, &self.white_king_position, &mut white_moves, &mut defence)
+                    piece.king_moves(&self.board, &self.white_king_position, &mut white_moves, &mut defence);
+                    ()
                 },
                 _ => ()//panic!("White king not at correct position.")
             }
 
             match self.board.board_state[usize::from(self.black_king_position)] {
                 Some(piece) => {
-                    piece.king_moves(&self.board, &self.black_king_position, &mut black_moves, &mut defence)
+                    piece.king_moves(&self.board, &self.black_king_position, &mut black_moves, &mut defence);
+                    ()
                 },
                 _ => ()//panic!("Black king not at correct position.")
             }
 
-            (white_moves, black_moves, defence)
+            if kings_captures.len() > 0 {
+                game_info.is_check = true;
+                if self.is_white_turn {
+                    let mut new_white = vec![];
+
+                    for m in white_moves.iter() {
+                        match m {
+                            FutureMove(_, _, _, _) => (),
+                            Castle(_, _, _, _, _) => (),
+                            Attack(_, _, _, false, _) => (),
+                            _ => {
+                                let mut newgame = self.clone();
+                                newgame.make_move(m);
+                                if !newgame.is_check(false) {
+                                    new_white.push(*m)
+                                }
+                            }
+                        }
+                    }
+
+                    white_moves = new_white
+                } else {
+                    let mut new_black = vec![];
+
+                    for m in black_moves.iter() {
+                        match m {
+                            FutureMove(_, _, _, _) => (),
+                            Castle(_, _, _, _, _) => (),
+                            Attack(_, _, _, false, _) => (),
+                            _ => {
+                                let mut newgame = self.clone();
+                                newgame.make_move(m);
+                                if !newgame.is_check(true) {
+                                    new_black.push(*m)
+                                }
+                            }
+                        }
+                    }
+
+                    black_moves = new_black
+                }
+            }
+
+            return TurnResult::new(white_moves, black_moves, defence, game_info)
+        }
+
+        fn is_check(&self, is_white: bool) -> bool {
+            let mut moves = vec![];
+            let mut kings_captures: Vec<KingCapture> = vec![];
+
+            for i in 0..64 {
+                match self.board.board_state[i] {
+                    Some(piece) => {
+                        if piece.is_white == is_white {
+                            piece.get_moves(&self.board, &(i as u8), &mut moves, &mut vec![], &mut kings_captures);
+                        }
+                    },
+                    None => ()
+                }
+            }
+
+            for capture in kings_captures.iter() {
+                if capture.piece.is_white == is_white {
+                    return true
+                }
+            }
+
+            return false
         }
 
         fn piece_value_mg(&self, piece: Piece, is_mg: bool) -> (i32, i32) {
@@ -463,26 +611,14 @@ pub mod game {
             }
         }*/
 
-        pub fn attacks(&self, moves: &Vec<MoveType>) -> (i32, i32) {
+        pub fn attacks(&self, game_info: &GameBoardInfo) -> (usize, usize) {
             let mut white = 0;
             let mut black = 0;
-            for m in moves.iter() {
-                match m {
-                    Attack(_, _, _, _, c) => {
-                        if *c {
-                            white += 1;
-                        } else {
-                            black += 1;
-                        }
-                    },
-                    Capture(_, _, _, _, c) => {
-                        if *c {
-                            white += 1;
-                        } else {
-                            black += 1;
-                        }
-                    },
-                    _ => ()
+            for i in 0..12 {
+                if i <= 5{
+                    white += game_info.move_count[i];
+                } else {
+                    black += game_info.move_count[i];
                 }
             }
 
@@ -505,7 +641,67 @@ pub mod game {
           return board(pos, square.x, square.y) == "B" ? 1 : 0;
         }
          */
-        fn bishop_pair(&self, piece: Option<Piece>, bishop_count_white: usize, bishop_count_black: usize) {
+        fn bishop_pair(&self, bishop_count_white: usize, bishop_count_black: usize) -> i32 {
+            let mut v = 0;
+
+            if bishop_count_white == 2 {
+                v += 1438;
+            }
+
+            if bishop_count_black == 2 {
+                v -= 1438;
+            }
+
+            return (v / 16) << 0;
+        }
+
+
+        fn mobility(&self, moves: &Vec<MoveType>, index: &usize) -> usize {
+            let mut moves_count = 0;
+
+            for m in moves.iter() {
+                match m {
+                    Attack(p, from, to, can_attack, color) => {
+                        if usize::from(*from) == *index {
+                            moves_count += 1;
+                        }
+                    }
+                    Capture(p, from, to, cp, coloor) => {
+                        if usize::from(*from) == *index {
+                            moves_count += 1;
+                        }
+                    }
+                    _ => ()
+                }
+            }
+
+            return moves_count;
+        }
+
+        /*
+            function mobility_mg(pos, square) {
+              if (square == null) return sum(pos, mobility_mg);
+              return mobility_bonus(pos, square, true);
+            }
+         */
+        fn mobility_bonus(&self, index: &usize, piece: &Piece, moves: &Vec<MoveType>, is_mg: bool) -> i32 {
+            let knight_bonus = if is_mg {[-62,-53,-12,-4,3,13,22,28,33]} else {[-81,-56,-31,-16,5,11,17,20,25]};
+            let bishop_bonus = if is_mg {[-48,-20,16,26,38,51,55,63,63,68,81,81,91,98]} else {[-59,-23,-3,13,24,42,54,57,65,73,78,86,88,97]};
+            let rook_bonus = if is_mg {[-60,-20,2,3,3,11,22,31,40,40,41,48,57,57,62]} else {[-78,-17,23,39,70,99,103,121,134,139,158,164,168,169,172]};
+            let queen_bonus = if is_mg {[-30,-12,-8,-9,20,23,23,35,38,53,64,65,65,66,67,67,72,72,77,79,93,108,108,108,110,114,114,116]} else {[-48,-30,-7,19,40,55,59,75,78,96,96,100,121,127,131,133,136,141,147,150,151,168,168,171,182,182,192,219]};
+
+            let mut mobility = self.mobility(moves, index);
+            if mobility > 0 {
+                mobility = mobility - 1
+            }
+            //println!("{}: {}", piece, mobility);
+            match piece.piece_type {
+                Knight => return if mobility >= knight_bonus.len() {knight_bonus[knight_bonus.len() - 1]} else {knight_bonus[mobility]},
+                Bishop => return if mobility >= bishop_bonus.len() {bishop_bonus[bishop_bonus.len() - 1]} else {bishop_bonus[mobility]},
+                Rook => return if mobility >= rook_bonus.len() {rook_bonus[rook_bonus.len() - 1]} else {rook_bonus[mobility]},
+                Queen => return if mobility >= queen_bonus.len() {queen_bonus[queen_bonus.len() - 1]} else {queen_bonus[mobility]},
+                _ => return 0
+            };
         }
 
         /*
@@ -532,15 +728,18 @@ pub mod game {
           return v;
         }
          */
+        fn imbalance(&self, piece: &Piece) -> i32 {
+            0
+        }
 
-        pub fn evaluate_board(&self, moves: &Vec<MoveType>) -> i32 {
+        pub fn evaluate_board(&self, tr: &TurnResult) -> i32 {
             let mut score: i32 = 0;
             let mut white_bishop = 0;
             let mut black_bishop = 0;
 
-            let (white_attack, black_attack) = self.attacks(moves);
+            let (white_attack, black_attack) = self.attacks(&tr.gbi);
 
-            score += white_attack - black_attack;
+            score += i32::try_from(white_attack).unwrap() - i32::try_from(black_attack).unwrap();
 
             for i in 0..64 {
                 match self.board.board_state[i] {
@@ -550,10 +749,18 @@ pub mod game {
                         score += self.psqt_mg(i, piece, true);
 
                         if bishop == 1 { white_bishop += 1; } else if bishop == 2 { black_bishop += 1; }
+
+                        if piece.is_white {
+                            score += self.mobility_bonus(&i, &piece, &tr.white_moves, true);
+                        } else {
+                            score -= self.mobility_bonus(&i, &piece, &tr.black_moves, true);
+                        }
                     },
                     None => ()
                 }
             }
+
+            score += self.bishop_pair(white_bishop, black_bishop);
 
             score
         }

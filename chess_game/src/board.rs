@@ -476,13 +476,20 @@ pub mod board {
         }
 
         pub fn compute_hash(&self) -> u64 { 
-            let mut tot = 0;
+            /*let mut tot: u64 = 0;
             for i in 0..64 {
                 let piece_value: u64 = Piece::piece_to_u64(&self.board_state[i]);
-                tot += piece_value * (i as u64);
+                tot += piece_value.pow(i as u32);
             }
 
-            tot
+            u64::from(tot)*/
+
+            let mut hashAddress = 5381;
+            for i in 0..64 {
+                hashAddress = ((hashAddress << 5) + hashAddress) + Piece::piece_to_u64(&self.board_state[i]);
+            }
+
+            return hashAddress;
         }
 
         pub fn get_piece_from_position(board: &Board, position: u8) -> Option<Piece> {
