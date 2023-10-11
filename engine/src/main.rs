@@ -35,7 +35,7 @@ fn main() {
     //println!("{:?}", moves);*/
 
 
-    do_game(depth);
+    do_game_white(depth);
 }
 
 pub fn read_line() -> usize {
@@ -63,30 +63,54 @@ pub fn print_moves(moves: &Vec<MoveType>) {
     }
 }
 
-pub fn do_game(depth: usize) {
+pub fn bench(depth: usize) {
     let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
     let mut leaves = 0;
 
 
     let hasher = RandomState::new();
-    let mut map: HashMap<u64, PositionInfo> = HashMap::with_hasher(hasher);
+    let mut map: HashMap<u64, PositionInfo> = HashMap::with_capacity_and_hasher(800000000, hasher);
 
     let start = Instant::now();
+    for i in 1..11 {
+
+    }
+}
+
+pub fn do_game_white(depth: usize) {
+    let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
+    let mut leaves = 0;
+
+
+    let hasher = RandomState::new();
+    let mut map: HashMap<u64, PositionInfo> = HashMap::with_capacity_and_hasher(800000000, hasher);
+
     loop {
-    //for i in 1..11 {
         if game.is_white_turn {
             chess_game::debug::debug::print_board(&game);
             println!("map size: {}", map.len());
             let mut new_game = game.clone();
+            let start = Instant::now();
             let (moves, leafs) = Engine::get_sorted_moves(&mut game, &mut map,new_game.is_white_turn, depth, true);
             println!("Leaves after {} moves: {}", depth, leafs);
+            println!("Should match with map size of: {}", map.len());
             leaves += leafs;
             print_branch(&moves);
+            println!("miliseconds elapsed: {}", start.elapsed().as_millis());
 
             let index = read_line();
 
+            match moves[index].m {
+                MoveType::Capture(p, _, _, cp, _) => {
+                    let hasher = RandomState::new();
+                    map = HashMap::with_capacity_and_hasher(800000000, hasher)
+                },
+                _ => ()
+            }
+
             game.make_move(&moves[index].m);
         } else {
+            chess_game::debug::debug::print_board(&game);
             let mut tr = game.get_all_moves();
             println!("move_len: {}", tr.black_moves.len());
             tr.black_moves.sort();
@@ -94,11 +118,19 @@ pub fn do_game(depth: usize) {
 
             let index = read_line();
 
+            match tr.black_moves[index] {
+                MoveType::Capture(p, _, _, cp, _) => {
+                    let hasher = RandomState::new();
+                    map = HashMap::with_capacity_and_hasher(800000000, hasher)
+                },
+                _ => ()
+            }
+
             game.make_move(&tr.black_moves[index]);
         }
     }
 
-    println!("seconds elapsed: {}", start.elapsed().as_millis());
+    //println!("seconds elapsed: {}", start.elapsed().as_millis());
 
     println!("average leaves: {}", leaves / 10);
 
