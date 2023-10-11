@@ -4,6 +4,7 @@ pub mod piece;
 pub mod debug;
 pub mod debug_structs;
 mod game_board_info;
+mod eval_board;
 
 /*
 Calculate moves for pieces only that are affected by the precious move.
