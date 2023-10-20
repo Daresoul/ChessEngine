@@ -49,10 +49,10 @@ mod eval_board {
             let mut mobility = self.mobility(moves, index);
 
             match piece.piece_type {
-                Knight => return knight_bonus[mobility],
-                Bishop => return bishop_bonus[mobility],
-                Rook => return rook_bonus[mobility],
-                Queen => return queen_bonus[mobility],
+                Knight => return if mobility >= knight_bonus.len() {knight_bonus[knight_bonus.len() - 1]} else {knight_bonus[mobility]},
+                Bishop => return if mobility >= bishop_bonus.len() {bishop_bonus[bishop_bonus.len() - 1]} else {bishop_bonus[mobility]},
+                Rook => return if mobility >= rook_bonus.len() {rook_bonus[rook_bonus.len() - 1]} else {rook_bonus[mobility]},
+                Queen => return if mobility >= queen_bonus.len() {queen_bonus[queen_bonus.len() - 1]} else {queen_bonus[mobility]},
                 _ => return 0
             };
         }

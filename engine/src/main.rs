@@ -3,36 +3,28 @@ mod game_tree;
 
 extern crate chess_game;
 
-use std::collections::hash_map::{DefaultHasher, RandomState};
+use std::collections::hash_map::{RandomState};
 use std::collections::HashMap;
 use std::env;
-use std::hash::BuildHasher;
+
 use std::io::stdin;
-use std::ptr::write;
+
 use std::time::Instant;
 use chess_game::board::board::MoveType;
-use chess_game::board::board::MoveType::Standard;
+
 use chess_game::game::game::Game;
 use engine::engine::Engine;
 use crate::engine::engine::{Branch, PositionInfo};
-use crate::game_tree::game_tree::GameTree;
+
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
     let depth = if args.len() > 1 {args[1].parse::<usize>().unwrap()} else {4};
 
-    /*let mut game = Game::new_from_string("r1b2r1k/4qp1p/p2ppb1Q/4nP2/1p1NP3/2N5/PPP4P/2KR1BR1".to_string(), true);
-    //let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
-    //let mut game = Game::new_from_string("8/8/7p/8/8/P7/8/8".to_string(), true);
-    println!("game eval at start: {}", game.evaluate_board());
-    chess_game::debug::debug::print_board(&game);
-
-    println!("Starting engine.");
-    let (moves1, leafs1) = Engine::get_sorted_moves(&mut game, true, depth, true);
-    let (moves2, leafs2) = Engine::get_sorted_moves(&mut game, true, depth, false);
-    println!("Leaves after {} moves with sorting: {} without sorting: {}", depth, leafs1, leafs2);
-    //println!("{:?}", moves);*/
+    //"r1b2r1k/4qp1p/p2ppb1Q/4nP2/1p1NP3/2N5/PPP4P/2KR1BR1"
+    //"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+    //"8/8/7p/8/8/P7/8/8"
 
 
     do_game_white(depth);
@@ -45,7 +37,7 @@ pub fn read_line() -> usize {
         .expect("Failed to read line");
     //println!("buffer: {}", buffer1);
     let num: usize = buffer1.trim().parse().expect("Input not an integer");
-    (num)
+    num
 }
 
 pub fn print_branch(branch: &Vec<Branch>) {
@@ -63,16 +55,16 @@ pub fn print_moves(moves: &Vec<MoveType>) {
     }
 }
 
-pub fn bench(depth: usize) {
-    let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
-    let mut leaves = 0;
+pub fn bench(_depth: usize) {
+    let _game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
+    let _leaves = 0;
 
 
     let hasher = RandomState::new();
-    let mut map: HashMap<u64, PositionInfo> = HashMap::with_capacity_and_hasher(800000000, hasher);
+    let _map: HashMap<u64, PositionInfo> = HashMap::with_capacity_and_hasher(800000000, hasher);
 
-    let start = Instant::now();
-    for i in 1..11 {
+    let _start = Instant::now();
+    for _i in 1..11 {
 
     }
 }
@@ -89,7 +81,7 @@ pub fn do_game_white(depth: usize) {
         if game.is_white_turn {
             chess_game::debug::debug::print_board(&game);
             println!("map size: {}", map.len());
-            let mut new_game = game.clone();
+            let new_game = game.clone();
             let start = Instant::now();
             let (moves, leafs) = Engine::get_sorted_moves(&mut game, &mut map,new_game.is_white_turn, depth, true);
             println!("Leaves after {} moves: {}", depth, leafs);
@@ -101,7 +93,7 @@ pub fn do_game_white(depth: usize) {
             let index = read_line();
 
             match moves[index].m {
-                MoveType::Capture(p, _, _, cp, _) => {
+                MoveType::Capture(_p, _, _, _cp, _) => {
                     let hasher = RandomState::new();
                     map = HashMap::with_capacity_and_hasher(800000000, hasher)
                 },
@@ -119,7 +111,7 @@ pub fn do_game_white(depth: usize) {
             let index = read_line();
 
             match tr.black_moves[index] {
-                MoveType::Capture(p, _, _, cp, _) => {
+                MoveType::Capture(_p, _, _, _cp, _) => {
                     let hasher = RandomState::new();
                     map = HashMap::with_capacity_and_hasher(800000000, hasher)
                 },

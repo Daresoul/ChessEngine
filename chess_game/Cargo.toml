@@ -9,14 +9,7 @@ rand = "0.8.5"
 [dev-dependencies]
 criterion = {version = "0.5.1", features = ["html_reports"]}
 
-[[bench]]
-name = "create_board"
-harness = false
 
 [[bench]]
-name = "test_moves"
-harness = false
-
-[[bench]]
-name = "hash_board"
+name = "test_bench"
 harness = false

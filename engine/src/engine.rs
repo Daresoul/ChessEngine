@@ -2,8 +2,8 @@ pub(crate) mod engine {
     use std::cmp::Ordering;
     use std::collections::HashMap;
     use std::fmt::{Debug};
-    use std::mem;
-    use std::mem::size_of;
+    
+    
     use chess_game::board::board::MoveType;
     use chess_game::game::game::{Game, TurnResult};
     use chess_game::piece::piece::PieceType::Pawn;
@@ -17,7 +17,9 @@ pub(crate) mod engine {
     }
 
     pub struct PositionInfo {
-        pub tr: TurnResult,
+        pub best_moves: Vec<MoveType>,
+        pub is_check: bool,
+        pub is_checkmate: bool,
         pub val: Option<i32>
     }
 
@@ -118,70 +120,40 @@ pub(crate) mod engine {
 
             let mut stopped: bool = false;
 
-            //all_moves.sort_by(Engine::middle_game_sort());
+            let moves: Vec<MoveType> = if is_maximizing { tr.white_moves } else { tr.black_moves };
 
-            if is_maximizing {
-                for mv in tr.white_moves.iter() {
-                    if Engine::should_skip_move(*mv, game.is_white_turn) {
-                        continue
-                    }
-
-                    if !stopped {
-                        let mut new_game = game.clone();
-                        new_game.make_move(mv);
-
-                        let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth, with_sorting);
-
-                        sorted_moves.push(Branch {
-                            m: *mv,
-                            val: value,
-                            leafs
-                        });
-                        all_leafs += leafs;
-
-                        alpha = alpha.max(value);
-
-                        if beta <= alpha {
-                            stopped = true;
-                        }
-                    } else {
-                        sorted_moves.push(Branch {
-                            m: *mv,
-                            val: i32::MIN,
-                            leafs: 0
-                        });
-                    }
+            for mv in moves.iter() {
+                if Engine::should_skip_move(*mv, is_maximizing) {
+                    continue
                 }
-            } else {
-                for mv in tr.black_moves.iter() {
-                    if Engine::should_skip_move(*mv, game.is_white_turn) {
-                        continue
-                    }
-                    if !stopped {
-                        let mut new_game = game.clone();
-                        new_game.make_move(mv);
+                if !stopped {
+                    let mut new_game = game.clone();
+                    new_game.make_move(mv);
 
-                        let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth, with_sorting);
+                    let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth, with_sorting);
 
-                        sorted_moves.push(Branch {
-                            m: *mv,
-                            val: value,
-                            leafs
-                        });
-                        all_leafs += leafs;
+                    sorted_moves.push(Branch {
+                        m: *mv,
+                        val: value,
+                        leafs
+                    });
+                    all_leafs += leafs;
 
-                        beta = beta.min(value);
-
-                        if beta <= alpha {
-                            stopped = true;
-                        }
+                    if is_maximizing {
+                        alpha = alpha.max(value)
                     } else {
-                        sorted_moves.push(Branch {
-                            m: *mv,
-                            val: i32::MAX,
-                            leafs: 0
-                        });
+                        beta = beta.min(value);
                     }
+
+                    if beta <= alpha {
+                        stopped = true;
+                    }
+                } else {
+                    sorted_moves.push(Branch {
+                        m: *mv,
+                        val: if is_maximizing {i32::MIN} else {i32::MAX},
+                        leafs: 0
+                    });
                 }
             }
 
@@ -205,26 +177,7 @@ pub(crate) mod engine {
 
             let is_white_turn = game.is_white_turn;
 
-            let mut tr: TurnResult = game.get_all_moves();
             let board_hash = game.board.compute_hash();
-
-            let moves: &mut Vec<MoveType> = if is_maximizing { &mut tr.white_moves } else { &mut tr.white_moves };
-
-            /*match map.get_mut(&board_hash) {
-                Some(pos) => {
-                    tr = pos.tr.clone();
-                },
-                None => {
-                    let pi = PositionInfo {
-                        tr: game.get_all_moves(),
-                        val: None
-                    };
-
-                    tr = pi.tr.clone();
-                    map.insert(board_hash, pi);
-                    ()
-                }
-            }*/
 
 
             if depth == 0 {
@@ -233,29 +186,19 @@ pub(crate) mod engine {
                         match pi.val {
                             Some(val) => return (val, 1),
                             None => {
-                                if tr.gbi.is_check {
-                                    if is_white_turn {
-                                        if tr.white_moves.len() < 1 {
-                                            return (i32::MIN, 1)
-                                        } else {
-                                            let value = game.evaluate_board(&tr);
-                                            pi.val = Some(value);
-                                            return (value, 1);
-                                            let mut new_game = *game;
-                                            return Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, 0, with_sorting);
-                                        }
+                                if pi.is_check {
+                                    if pi.is_checkmate {
+                                        return if is_maximizing {(i32::MIN, 1)} else {(i32::MAX, 1)}
                                     } else {
-                                        if tr.black_moves.len() < 1 {
-                                            return (i32::MAX, 1)
-                                        } else {
-                                            let value = game.evaluate_board(&tr);
-                                            pi.val = Some(value);
-                                            return (value, 1);
-                                            let mut new_game = *game;
-                                            return Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, 0, with_sorting);
-                                        }
+                                        let mut tr: TurnResult = game.get_all_moves();
+                                        let value = game.evaluate_board(&tr);
+                                        pi.val = Some(value);
+                                        return (value, 1);
+                                        let mut new_game = *game;
+                                        return Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth - 1, with_sorting);
                                     }
                                 } else {
+                                    let tr: TurnResult = game.get_all_moves();
                                     let value = game.evaluate_board(&tr);
                                     pi.val = Some(value);
                                     return (value, 1);
@@ -264,9 +207,12 @@ pub(crate) mod engine {
                         }
                     },
                     None => {
+                        let mut tr: TurnResult = game.get_all_moves();
                         let v = game.evaluate_board(&tr);
                         map.insert(board_hash, PositionInfo {
-                            tr,
+                            best_moves: vec![],
+                            is_check: tr.gbi.is_check,
+                            is_checkmate: if is_maximizing { tr.white_moves.len() == 0 } else { tr.black_moves.len() == 0 },
                             val: Some(v)
                         });
                         return (v, 1)
@@ -274,6 +220,57 @@ pub(crate) mod engine {
                 }
             }
 
+            let mut tr: TurnResult;
+            let mut moves: Vec<MoveType>;
+
+            match map.get_mut(&board_hash) {
+                Some(pos) => {
+                    if pos.best_moves.len() > 0 {
+                        moves = pos.best_moves.clone();
+
+                        let mut val = if is_maximizing {i32::MIN} else {i32::MAX};
+                        let mut leaves = 0;
+
+                        if with_sorting {
+                            moves.sort_by(Engine::middle_game_sort());
+                        }
+
+                        for m in moves.iter() {
+                            if Engine::should_skip_move(*m, is_maximizing) {
+                                continue;
+                            }
+
+                            let mut new_game = *game;
+                            new_game.make_move(m);
+
+                            let (score, leave) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth - 1, with_sorting);
+
+                            if is_maximizing {
+                                val = val.max(score);
+                                alpha = alpha.max(score);
+                            } else {
+                                val = val.min(score);
+                                beta = beta.min(score);
+                            }
+
+                            leaves += leave;
+
+                            if beta <= alpha {
+                                break;
+                            }
+                        }
+
+                        return (val, leaves)
+                    }
+                },
+                None => ()
+            }
+
+            tr = game.get_all_moves();
+            moves = if is_maximizing { tr.white_moves } else { tr.black_moves };
+            let is_checkmate = moves.len() == 0;
+            let mut best = None;
+            let mut best_val = if is_maximizing {i32::MIN} else {i32::MAX};
 
             let mut val = if is_maximizing {i32::MIN} else {i32::MAX};
             let mut leaves = 0;
@@ -293,11 +290,20 @@ pub(crate) mod engine {
                 let (score, leave) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth - 1, with_sorting);
 
                 if is_maximizing {
-                    val = val.max(score.clone());
+                    val = val.max(score);
                     alpha = alpha.max(score);
+
+                    if score > best_val {
+                        best_val = score;
+                        best = Some(*m);
+                    }
                 } else {
                     val = val.min(score);
                     beta = beta.min(score);
+                    if score < best_val {
+                        best_val = score;
+                        best = Some(*m);
+                    }
                 }
 
                 leaves += leave;
@@ -306,6 +312,32 @@ pub(crate) mod engine {
                     break;
                 }
             }
+
+            /*if moves.len() == 0 {
+                println!("123");
+                return (if !is_maximizing {i32::MIN} else {i32::MAX}, 1)
+            }*/
+
+            match best {
+                Some(m) => {
+                    let pi = PositionInfo {
+                        best_moves: vec![m],
+                        is_check: tr.gbi.is_check,
+                        is_checkmate: false,
+                        val: None
+                    };
+                    map.insert(board_hash, pi);
+                },
+                None => {
+                    let pi = PositionInfo {
+                        best_moves: vec![],
+                        is_check: tr.gbi.is_check,
+                        is_checkmate: true,
+                        val: None
+                    };
+                    map.insert(board_hash, pi);
+                }
+            };
 
             return (val, leaves)
         }
@@ -327,15 +359,15 @@ pub(crate) mod engine {
         fn middle_game_sort() -> fn(&MoveType, &MoveType) -> Ordering {
             return |m1, m2|
                 match m1 {
-                    MoveType::Standard(from1, _, _) => {
+                    MoveType::Standard(_from1, _, _) => {
                         match m2 {
-                            MoveType::Standard(from2, _, _) => {
+                            MoveType::Standard(_from2, _, _) => {
                                 Ordering::Equal
                             }
                             MoveType::Capture(_, _, _, _, _) => {
                                 Ordering::Greater
                             }
-                            MoveType::Attack(p, _, _, _, _) => {
+                            MoveType::Attack(_p, _, _, _, _) => {
                                 Ordering::Greater
                             }
                             MoveType::Castle(_, _, _, _, _) => Ordering::Less,
@@ -397,7 +429,7 @@ pub(crate) mod engine {
 
                                 Ordering::Equal
                             }
-                            MoveType::Attack(p, _, _, _, _) => {
+                            MoveType::Attack(_p, _, _, _, _) => {
                                 if pt.get_piece_type_value(true) <= cp.get_piece_type_value(true) {
                                     return Ordering::Greater
                                 }

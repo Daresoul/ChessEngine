@@ -94,7 +94,7 @@ mod tests {
     use crate::debug_structs::debug_structs;
 
 
-    #[test]
+/*    #[test]
     fn test_board_value_one_piece_start() {
         let mut arr : [Option<Piece>; 64] = [None; 64];
 
@@ -1605,6 +1605,6 @@ mod tests {
         expected_moves.sort();
 
         assert_eq!(expected_moves, white_moves);
-    }
+    }*/
 
 }

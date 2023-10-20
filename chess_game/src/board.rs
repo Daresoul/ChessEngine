@@ -1,7 +1,8 @@
 pub mod board {
     use std::cmp::Ordering;
     use std::{fmt, u8};
-    use std::fmt::{Debug, Formatter};
+    use std::fmt::{Debug, format, Formatter};
+
     use crate::debug;
     use crate::debug_structs::debug_structs::get_debug_pawn_board;
 
@@ -47,29 +48,84 @@ pub mod board {
         }
     }
 
+    impl MoveType {
+        pub fn convert_position_to_chess_notation(&self, index: &u8) -> String {
+            let mut str: String = String::new();
+
+            match index % 8 {
+                0 => str.push('A'),
+                1 => str.push('B'),
+                2 => str.push('C'),
+                3 => str.push('D'),
+                4 => str.push('E'),
+                5 => str.push('F'),
+                6 => str.push('G'),
+                7 => str.push('H'),
+                _ => str.push('Z')
+            }
+
+            match index / 8 {
+                0 => str.push('8'),
+                1 => str.push('7'),
+                2 => str.push('6'),
+                3 => str.push('5'),
+                4 => str.push('4'),
+                5 => str.push('3'),
+                6 => str.push('2'),
+                7 => str.push('1'),
+                _ => str.push('Z')
+            }
+
+            return str
+        }
+
+    }
+
     impl fmt::Display for MoveType {
+
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+
             match self {
-                MoveType::Standard(from, val, color) => {
-                    write!(f, "Standard({}, {}, {})",from, val, color)
+                MoveType::Standard(from, to, color) => {
+                    let from_ch = self.convert_position_to_chess_notation(from);
+                    let to_ch = self.convert_position_to_chess_notation(to);
+                    let mut color_ch = String::new();
+                    if *color { color_ch.push('W') } else { color_ch.push('B') };
+                    write!(f, "{}P {} -> {}", color_ch, from_ch, to_ch)
                 },
-                MoveType::FutureMove(p, from, val, color) => {
-                    write!(f, "FutureMove({}, {}, {}, {})", p, from, val, color)
+                MoveType::FutureMove(p, from, to, color) => {
+                    let from_ch = self.convert_position_to_chess_notation(from);
+                    let to_ch = self.convert_position_to_chess_notation(to);
+                    write!(f, "{} {} -> {}", p, from_ch, to_ch)
                 },
-                MoveType::Promotion(from, val, piece, color) => {
-                    write!(f, "Promotion({}, {}, {}, {})",from, val, piece, color)
+                MoveType::Promotion(from, to, piece, color) => {
+                    let from_ch = self.convert_position_to_chess_notation(from);
+                    let to_ch = self.convert_position_to_chess_notation(to);
+                    let mut color_ch = String::new();
+                    if *color { color_ch.push('W') } else { color_ch.push('B') };
+                    write!(f, "{}P {} -> {} as {}", color_ch, from_ch, to_ch, piece)
                 },
                 MoveType::Castle(king_start, king_end, rook_start, rook_end, color) => {
-                    write!(f, "Castle({}, {}, {}, {}, {})", king_start, king_end, rook_start, rook_end, color)
+                    let from_ch = self.convert_position_to_chess_notation(king_start);
+                    let to_ch = self.convert_position_to_chess_notation(king_end);
+                    let mut color_ch = String::new();
+                    if *color { color_ch.push('W') } else { color_ch.push('B') };
+                    write!(f, "{}K {} -> {} Castle", color_ch, from_ch, to_ch)
                 },
-                MoveType::Attack(p, from, val, _can_move, color) => {
-                    write!(f, "Attack({}, {}, {}, {})", p, from, val, color)
+                MoveType::Attack(p, from, to, _can_move, color) => {
+                    let from_ch = self.convert_position_to_chess_notation(from);
+                    let to_ch = self.convert_position_to_chess_notation(to);
+                    write!(f, "{} {} -> {}", p, from_ch, to_ch)
                 },
-                MoveType::Capture(p, from, val, cp, color) => {
-                    write!(f, "Capture({}, {}, {}, {}, {})", p, from, val, cp, color)
+                MoveType::Capture(p, from, to, cp, color) => {
+                    let from_ch = self.convert_position_to_chess_notation(from);
+                    let to_ch = self.convert_position_to_chess_notation(to);
+                    write!(f, "{} {} -X> {}", p, from_ch, to_ch)
                 },
-                MoveType::Defend(p, from, val, d, color) => {
-                    write!(f, "Defend({}, {}, {}, {}, {})", p, from, val, d, color)
+                MoveType::Defend(p, from, to, d, color) => {
+                    let from_ch = self.convert_position_to_chess_notation(from);
+                    let to_ch = self.convert_position_to_chess_notation(to);
+                    write!(f, "{} {} -> {} defending", p, from_ch, to_ch)
                 }
             }
         }

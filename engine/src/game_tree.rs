@@ -1,6 +1,6 @@
 pub(crate) mod game_tree {
     use std::fmt::{Debug, Formatter};
-    use std::fs::OpenOptions;
+    
     use chess_game::board::board::MoveType;
 
     #[derive(Clone)]
