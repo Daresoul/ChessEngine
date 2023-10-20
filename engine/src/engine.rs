@@ -175,7 +175,7 @@ pub(crate) mod engine {
             with_sorting: bool
         ) -> (i32, usize) {
 
-            let is_white_turn = game.is_white_turn;
+            let _is_white_turn = game.is_white_turn;
 
             let board_hash = game.board.compute_hash();
 
@@ -190,7 +190,7 @@ pub(crate) mod engine {
                                     if pi.is_checkmate {
                                         return if is_maximizing {(i32::MIN, 1)} else {(i32::MAX, 1)}
                                     } else {
-                                        let mut tr: TurnResult = game.get_all_moves();
+                                        let tr: TurnResult = game.get_all_moves();
                                         let value = game.evaluate_board(&tr);
                                         pi.val = Some(value);
                                         return (value, 1);
@@ -207,7 +207,7 @@ pub(crate) mod engine {
                         }
                     },
                     None => {
-                        let mut tr: TurnResult = game.get_all_moves();
+                        let tr: TurnResult = game.get_all_moves();
                         let v = game.evaluate_board(&tr);
                         map.insert(board_hash, PositionInfo {
                             best_moves: vec![],
@@ -220,7 +220,7 @@ pub(crate) mod engine {
                 }
             }
 
-            let mut tr: TurnResult;
+            let tr: TurnResult;
             let mut moves: Vec<MoveType>;
 
             match map.get_mut(&board_hash) {
@@ -268,7 +268,7 @@ pub(crate) mod engine {
 
             tr = game.get_all_moves();
             moves = if is_maximizing { tr.white_moves } else { tr.black_moves };
-            let is_checkmate = moves.len() == 0;
+            let _is_checkmate = moves.len() == 0;
             let mut best = None;
             let mut best_val = if is_maximizing {i32::MIN} else {i32::MAX};
 
