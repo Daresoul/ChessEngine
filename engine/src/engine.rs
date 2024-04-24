@@ -1,26 +1,15 @@
 pub(crate) mod engine {
     use std::cmp::Ordering;
-    use std::collections::HashMap;
     use std::fmt::{Debug};
-    
-    
-    use chess_game::board::board::MoveType;
-    use chess_game::game::game::{Game, TurnResult};
-    use chess_game::piece::piece::PieceType::Pawn;
-    use crate::game_tree::game_tree::GameTree;
+    use crate::board::board::Move;
+    use crate::game::game::Game;
+
 
     #[derive(Debug)]
     pub struct Branch {
-        pub m: MoveType,
+        pub m: Move,
         pub val: i32,
         pub leafs: usize
-    }
-
-    pub struct PositionInfo {
-        pub best_moves: Vec<MoveType>,
-        pub is_check: bool,
-        pub is_checkmate: bool,
-        pub val: Option<i32>
     }
 
     impl Eq for Branch {}
@@ -33,13 +22,13 @@ pub(crate) mod engine {
 
     impl PartialOrd<Self> for Branch {
         fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-          other.val.partial_cmp(&self.val)
+            other.val.partial_cmp(&self.val)
         }
     }
 
     impl Ord for Branch {
         fn cmp(&self, other: &Self) -> Ordering {
-           other.val.cmp(&self.val)
+            other.val.cmp(&self.val)
         }
     }
 
@@ -49,66 +38,7 @@ pub(crate) mod engine {
     }
 
     impl Engine {
-        pub(crate) fn build_tree(game: & mut Game, parent: &mut GameTree, maximizing_player: bool, depth: usize) -> i32 {
-            let is_white_turn = game.is_white_turn;
-
-            let tr = game.get_all_moves();
-
-            if depth == 0 {
-                    return game.evaluate_board(&tr);
-            }
-
-            if is_white_turn == maximizing_player {
-                let mut max_eval = i32::MIN;
-
-                for m in tr.white_moves.iter() {
-                    if Engine::should_skip_move(*m, is_white_turn) {
-                        continue;
-                    }
-
-                    let mut new_game = game.clone();
-                    new_game.make_move(&m);
-
-                    let mut new_node: GameTree = GameTree::new(Some(*m));
-                    let eval = Engine::build_tree(&mut new_game, &mut new_node, !maximizing_player, depth - 1);
-
-                    let board_eval = new_game.evaluate_board(&tr);
-
-                    new_node.set_board_evals(board_eval, eval);
-                    parent.add(new_node);
-
-                    max_eval = i32::max(max_eval, eval);
-                }
-
-                return max_eval
-            }
-            else {
-                let mut min_eval = i32::MAX;
-
-                for m in tr.black_moves.iter() {
-                    if Engine::should_skip_move(*m, is_white_turn) {
-                        continue;
-                    }
-
-                    let mut new_game = game.clone();
-                    new_game.make_move(&m);
-
-                    let mut new_node: GameTree = GameTree::new(Some(*m));
-                    let eval = Engine::build_tree(&mut new_game, &mut new_node, !maximizing_player, depth - 1);
-
-                    let board_eval = new_game.evaluate_board(&tr);
-
-                    new_node.set_board_evals(board_eval, eval);
-                    parent.add(new_node);
-
-                    min_eval = i32::min(min_eval, eval);
-                }
-
-                return min_eval
-            }
-        }
-
-        pub fn get_sorted_moves(game: &mut Game, map: &mut HashMap<u64, PositionInfo>, is_maximizing: bool, depth: usize, with_sorting: bool) -> (Vec<Branch>, usize) {
+        pub fn get_sorted_moves(game: &mut Game, is_maximizing: bool, depth: usize,) -> (Vec<Branch>, usize) {
             let mut sorted_moves: Vec<Branch> = vec![];
 
             let mut alpha = i32::MIN;
@@ -116,21 +46,15 @@ pub(crate) mod engine {
 
             let mut all_leafs = 0;
 
-            let tr = game.get_all_moves();
-
+            let moves = game.get_all_moves();
             let mut stopped: bool = false;
 
-            let moves: Vec<MoveType> = if is_maximizing { tr.white_moves } else { tr.black_moves };
-
             for mv in moves.iter() {
-                if Engine::should_skip_move(*mv, is_maximizing) {
-                    continue
-                }
                 if !stopped {
                     let mut new_game = game.clone();
                     new_game.make_move(mv);
 
-                    let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth, with_sorting);
+                    let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, !is_maximizing, alpha, beta, depth);
 
                     sorted_moves.push(Branch {
                         m: *mv,
@@ -151,7 +75,7 @@ pub(crate) mod engine {
                 } else {
                     sorted_moves.push(Branch {
                         m: *mv,
-                        val: if is_maximizing {i32::MIN} else {i32::MAX},
+                        val: if is_maximizing { i32::MIN } else { i32::MAX },
                         leafs: 0
                     });
                 }
@@ -167,143 +91,32 @@ pub(crate) mod engine {
 
         pub fn alpha_beta_from_internet(
             game: &Game,
-            map: &mut HashMap<u64, PositionInfo>,
             is_maximizing: bool,
             mut alpha: i32,
             mut beta: i32,
-            depth: usize,
-            with_sorting: bool
+            depth: usize
         ) -> (i32, usize) {
-
-            let _is_white_turn = game.is_white_turn;
-
-            let board_hash = game.board.compute_hash();
-
+            let mut leaves = 0;
+            let mut val = 0;
 
             if depth == 0 {
-                match map.get_mut(&board_hash) {
-                    Some(pi) => {
-                        match pi.val {
-                            Some(val) => return (val, 1),
-                            None => {
-                                if pi.is_check {
-                                    if pi.is_checkmate {
-                                        return if is_maximizing {(i32::MIN, 1)} else {(i32::MAX, 1)}
-                                    } else {
-                                        let tr: TurnResult = game.get_all_moves();
-                                        let value = game.evaluate_board(&tr);
-                                        pi.val = Some(value);
-                                        return (value, 1);
-                                        let mut new_game = *game;
-                                        return Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth - 1, with_sorting);
-                                    }
-                                } else {
-                                    let tr: TurnResult = game.get_all_moves();
-                                    let value = game.evaluate_board(&tr);
-                                    pi.val = Some(value);
-                                    return (value, 1);
-                                }
-                            }
-                        }
-                    },
-                    None => {
-                        let tr: TurnResult = game.get_all_moves();
-                        let v = game.evaluate_board(&tr);
-                        map.insert(board_hash, PositionInfo {
-                            best_moves: vec![],
-                            is_check: tr.gbi.is_check,
-                            is_checkmate: if is_maximizing { tr.white_moves.len() == 0 } else { tr.black_moves.len() == 0 },
-                            val: Some(v)
-                        });
-                        return (v, 1)
-                    }
-                }
+                return (game.evaluate_board(), 1)
             }
 
-            let tr: TurnResult;
-            let mut moves: Vec<MoveType>;
-
-            match map.get_mut(&board_hash) {
-                Some(pos) => {
-                    if pos.best_moves.len() > 0 {
-                        moves = pos.best_moves.clone();
-
-                        let mut val = if is_maximizing {i32::MIN} else {i32::MAX};
-                        let mut leaves = 0;
-
-                        if with_sorting {
-                            moves.sort_by(Engine::middle_game_sort());
-                        }
-
-                        for m in moves.iter() {
-                            if Engine::should_skip_move(*m, is_maximizing) {
-                                continue;
-                            }
-
-                            let mut new_game = *game;
-                            new_game.make_move(m);
-
-                            let (score, leave) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth - 1, with_sorting);
-
-                            if is_maximizing {
-                                val = val.max(score);
-                                alpha = alpha.max(score);
-                            } else {
-                                val = val.min(score);
-                                beta = beta.min(score);
-                            }
-
-                            leaves += leave;
-
-                            if beta <= alpha {
-                                break;
-                            }
-                        }
-
-                        return (val, leaves)
-                    }
-                },
-                None => ()
-            }
-
-            tr = game.get_all_moves();
-            moves = if is_maximizing { tr.white_moves } else { tr.black_moves };
-            let _is_checkmate = moves.len() == 0;
-            let mut best = None;
-            let mut best_val = if is_maximizing {i32::MIN} else {i32::MAX};
-
-            let mut val = if is_maximizing {i32::MIN} else {i32::MAX};
-            let mut leaves = 0;
-
-            if with_sorting {
-                moves.sort_by(Engine::middle_game_sort());
-            }
+            let moves = game.get_all_moves();
 
             for m in moves.iter() {
-                if Engine::should_skip_move(*m, is_maximizing) {
-                    continue;
-                }
-
                 let mut new_game = *game;
                 new_game.make_move(m);
 
-                let (score, leave) = Engine::alpha_beta_from_internet(&new_game, map, !is_maximizing, alpha, beta, depth - 1, with_sorting);
+                let (score, leave) = Engine::alpha_beta_from_internet(&new_game, !is_maximizing, alpha, beta, depth - 1);
 
                 if is_maximizing {
                     val = val.max(score);
                     alpha = alpha.max(score);
-
-                    if score > best_val {
-                        best_val = score;
-                        best = Some(*m);
-                    }
                 } else {
                     val = val.min(score);
                     beta = beta.min(score);
-                    if score < best_val {
-                        best_val = score;
-                        best = Some(*m);
-                    }
                 }
 
                 leaves += leave;
@@ -313,138 +126,7 @@ pub(crate) mod engine {
                 }
             }
 
-            /*if moves.len() == 0 {
-                println!("123");
-                return (if !is_maximizing {i32::MIN} else {i32::MAX}, 1)
-            }*/
-
-            match best {
-                Some(m) => {
-                    let pi = PositionInfo {
-                        best_moves: vec![m],
-                        is_check: tr.gbi.is_check,
-                        is_checkmate: false,
-                        val: None
-                    };
-                    map.insert(board_hash, pi);
-                },
-                None => {
-                    let pi = PositionInfo {
-                        best_moves: vec![],
-                        is_check: tr.gbi.is_check,
-                        is_checkmate: true,
-                        val: None
-                    };
-                    map.insert(board_hash, pi);
-                }
-            };
-
             return (val, leaves)
         }
-
-
-        fn should_skip_move(m: MoveType, is_white_turn: bool) -> bool {
-            match m {
-                MoveType::Standard(_, _, c) => { if c != is_white_turn {return true} }
-                MoveType::FutureMove(_, _, _, _c) => {return true}
-                MoveType::Castle(_, _, _, _, c) => { if c != is_white_turn {return true} }
-                MoveType::Promotion(_, _, _, c) => { if c != is_white_turn {return true} }
-                MoveType::Attack(_, _, _, can_move, c) => { if c != is_white_turn || !can_move {return true} }
-                MoveType::Capture(_, _, _, _, c) => { if c != is_white_turn {return true} }
-                MoveType::Defend(_, _, _, _, _c) => { panic!("UMMMMMM DEFENCE HERE?") }
-            }
-            false
-        }
-
-        fn middle_game_sort() -> fn(&MoveType, &MoveType) -> Ordering {
-            return |m1, m2|
-                match m1 {
-                    MoveType::Standard(_from1, _, _) => {
-                        match m2 {
-                            MoveType::Standard(_from2, _, _) => {
-                                Ordering::Equal
-                            }
-                            MoveType::Capture(_, _, _, _, _) => {
-                                Ordering::Greater
-                            }
-                            MoveType::Attack(_p, _, _, _, _) => {
-                                Ordering::Greater
-                            }
-                            MoveType::Castle(_, _, _, _, _) => Ordering::Less,
-                            _ => Ordering::Greater
-                        }
-                    },
-                    MoveType::Attack(p, _, _, _, _) => {
-                        match m2 {
-                            MoveType::Standard(_, _, _) => {
-                                Ordering::Greater
-                            }
-                            MoveType::Capture(_, _, _, _, _) => {
-                                Ordering::Less
-                            }
-                            MoveType::Attack(pt, _, _, _, _) => {
-                                let p1_val = p.get_piece_type_value(true);
-                                let p2_val = pt.get_piece_type_value(true);
-
-                                if p1_val < p2_val {
-                                    Ordering::Greater
-                                }
-                                else if *p == Pawn {
-                                    Ordering::Greater
-                                }
-                                else if p1_val == p2_val {
-                                    Ordering::Equal
-                                }
-                                else {
-                                    Ordering::Less
-                                }
-                            }
-                            MoveType::Castle(_, _, _, _, _) => Ordering::Less,
-                            _ => Ordering::Greater
-                        }
-                    }
-                    MoveType::Capture(pt, _, _, cp, _) => {
-                        match m2 {
-                            MoveType::Standard(_, _, _) => {
-                                if pt.get_piece_type_value(true) < cp.get_piece_type_value(true) {
-                                    return Ordering::Greater
-                                }
-                                Ordering::Less
-                            }
-                            MoveType::Capture(cpt, _, _, ccp, _) => {
-                                if cpt.get_piece_type_value(true) <= ccp.get_piece_type_value(true)
-                                && pt.get_piece_type_value(true) <= cp.get_piece_type_value(true) {
-                                    if ccp.get_piece_type_value(true) - cpt.get_piece_type_value(true) <
-                                        cp.get_piece_type_value(true) - pt.get_piece_type_value(true) {
-                                        return Ordering::Less
-                                    } else {
-                                        return Ordering::Greater
-                                    }
-                                } else if cpt.get_piece_type_value(true) <= ccp.get_piece_type_value(true) {
-                                    return Ordering::Less
-                                }
-                                else if pt.get_piece_type_value(true) <= cp.get_piece_type_value(true) {
-                                    return Ordering::Greater
-                                }
-
-                                Ordering::Equal
-                            }
-                            MoveType::Attack(_p, _, _, _, _) => {
-                                if pt.get_piece_type_value(true) <= cp.get_piece_type_value(true) {
-                                    return Ordering::Greater
-                                }
-                                Ordering::Less
-                            }
-                            MoveType::Castle(_, _, _, _, _) => Ordering::Less,
-                            _ => Ordering::Greater
-                        }
-                    }
-                    MoveType::Castle(_, _, _, _, _) => {
-                        Ordering::Greater
-                    }
-                    _ => Ordering::Greater
-                }
-        }
-
     }
 }
