@@ -96,7 +96,7 @@ impl MoveGen {
         return result
     }
 
-    pub fn calculate_black_pawn_move(&self, position: u64, occupancy: u64, opponent_occupancy: u64) -> u64{
+    pub fn calculate_black_pawn_move(&self, position: usize, occupancy: u64, opponent_occupancy: u64) -> u64{
         let mut result: u64 = 0;
         if position + 8 > 63 {
             return 0;

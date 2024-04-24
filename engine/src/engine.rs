@@ -46,15 +46,19 @@ pub(crate) mod engine {
 
             let mut all_leafs = 0;
 
-            let moves = game.get_all_moves();
+            game.get_all_moves();
             let mut stopped: bool = false;
 
-            for mv in moves.iter() {
+            let moves = if is_maximizing { game.white_moves } else { game.black_moves };
+            let max = if is_maximizing {game.white_moves_len} else {game.black_moves_len};
+
+            for (i, mv) in moves.iter().enumerate()  {
+                if i == max {break;}
                 if !stopped {
                     let mut new_game = game.clone();
                     new_game.make_move(mv);
 
-                    let (value, leafs) = Engine::alpha_beta_from_internet(&new_game, !is_maximizing, alpha, beta, depth);
+                    let (value, leafs) = Engine::alpha_beta_from_internet(&mut new_game, !is_maximizing, alpha, beta, depth);
 
                     sorted_moves.push(Branch {
                         m: *mv,
@@ -90,7 +94,7 @@ pub(crate) mod engine {
         }
 
         pub fn alpha_beta_from_internet(
-            game: &Game,
+            game: &mut Game,
             is_maximizing: bool,
             mut alpha: i32,
             mut beta: i32,
@@ -103,13 +107,17 @@ pub(crate) mod engine {
                 return (game.evaluate_board(), 1)
             }
 
-            let moves = game.get_all_moves();
+            game.get_all_moves();
 
-            for m in moves.iter() {
-                let mut new_game = *game;
+            let moves = if is_maximizing { game.white_moves } else { game.black_moves };
+            let max = if is_maximizing {game.white_moves_len} else {game.black_moves_len};
+
+            for (i, m) in moves.iter().enumerate() {
+                if i == max {break;}
+                let mut new_game = game.clone();
                 new_game.make_move(m);
 
-                let (score, leave) = Engine::alpha_beta_from_internet(&new_game, !is_maximizing, alpha, beta, depth - 1);
+                let (score, leave) = Engine::alpha_beta_from_internet(&mut new_game, !is_maximizing, alpha, beta, depth - 1);
 
                 if is_maximizing {
                     val = val.max(score);

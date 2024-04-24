@@ -3,11 +3,12 @@ mod rook_move_gen;
 mod bishop_move_gen;
 
 pub mod move_gen {
-    use log::debug;
+    
     use PieceType::{BISHOP, KING, KNIGHT, QUEEN, ROOK};
-    use crate::debug::debug;
-    use crate::debug::debug::print_bitboard_board;
+    
+    
     use crate::magic::magic;
+    use crate::magic::magic::Magic;
 
     pub enum Direction {
         South,
@@ -73,29 +74,29 @@ pub mod move_gen {
         }
     }
 
-    #[derive(Clone, Copy)]
+    #[derive(Clone)]
     pub struct MoveGen {
-        pub king_position_board: [u64; 64],
-        pub knight_position_board: [u64; 64],
-        pub rook_masks: [u64; 64],
-        pub rook_magics: [magic::Magic; 64],
-        pub rook_table: [u64; 102_400],
-        pub bishop_masks: [u64; 64],
-        pub bishop_magics: [magic::Magic; 64],
-        pub bishop_table: [u64; 5_248]
+        pub king_position_board: Vec<u64>,//[u64; 64],
+        pub knight_position_board: Vec<u64>,//[u64; 64],
+        pub rook_masks: Vec<u64>,//[u64; 64],
+        pub rook_magics: Vec<Magic>,//[Magic; 64],
+        pub rook_table: Vec<u64>,//[u64; 102_400],
+        pub bishop_masks: Vec<u64>,//[u64; 64],
+        pub bishop_magics: Vec<Magic>, //[Magic; 64],
+        pub bishop_table: Vec<u64>//[u64; 5_248]
     }
 
     impl MoveGen {
         pub fn init() -> MoveGen {
             let mut p = MoveGen {
-                knight_position_board: [0; 64],
-                king_position_board: [0; 64],
-                rook_masks: [0; 64],
-                rook_magics: [Default::default(); 64],
-                rook_table: [0; 102_400],
-                bishop_masks: [0; 64],
-                bishop_magics: [Default::default(); 64],
-                bishop_table: [0; 5_248],
+                knight_position_board: vec![0; 64],
+                king_position_board: vec![0; 64],
+                rook_masks: vec![0; 64],
+                rook_magics: vec![Magic {magic_number: 0, offset: 0, shift: 0, mask: 0}; 64],
+                rook_table: vec![0; 102_400],
+                bishop_masks: vec![0; 64],
+                bishop_magics: vec![Magic {magic_number: 0, offset: 0, shift: 0, mask: 0}; 64],
+                bishop_table: vec![0; 5_248],
             };
 
             p.calculate_knight_moves();

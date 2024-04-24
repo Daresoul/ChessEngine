@@ -21,7 +21,7 @@ use crate::game::game::Game;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let depth = if args.len() > 1 {args[1].parse::<usize>().unwrap()} else {4};
+    let _depth = if args.len() > 1 {args[1].parse::<usize>().unwrap()} else {4};
 
 
     //"r1b2r1k/4qp1p/p2ppb1Q/4nP2/1p1NP3/2N5/PPP4P/2KR1BR1"
@@ -30,7 +30,7 @@ fn main() {
 
 
 //    do_game_white(depth);
-    do_game_white(6);
+    //do_game_white(6);
 }
 
 pub fn print_moves(m: &Vec<Move>) {
@@ -54,22 +54,6 @@ pub fn read_line() -> usize {
     num
 }
 
-pub fn play_game() {
-    let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
-
-    loop {
-        debug::debug::print_board(&game);
-
-        let moves = game.get_all_moves();
-
-        print_moves(&moves);
-
-        let num = read_line();
-
-        game.make_move(&moves[num])
-    }
-}
-
 pub fn print_branches(branches: &Vec<Branch>) -> () {
     for (i, branch) in branches.iter().enumerate() {
         match branch.m {
@@ -80,7 +64,7 @@ pub fn print_branches(branches: &Vec<Branch>) -> () {
     }
 }
 
-pub fn do_game_white(depth: usize) {
+/*pub fn do_game_white(depth: usize) {
 
     let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
 
@@ -89,7 +73,7 @@ pub fn do_game_white(depth: usize) {
     loop {
         if game.is_white_turn {
             debug::debug::print_board(&game);
-            let new_game = game;
+            let new_game = game.clone();
             let start = Instant::now();
             let (moves, leafs) = Engine::get_sorted_moves(&mut game,new_game.is_white_turn, depth);
             println!("Leaves after {} moves: {}", depth, leafs);
@@ -103,7 +87,7 @@ pub fn do_game_white(depth: usize) {
             game.make_move(&moves[index].m);
         } else {
             debug::debug::print_board(&game);
-            let mut moves= game.get_all_moves();
+            let moves= game.get_all_moves();
             println!("move_len: {}", moves.len());
             print_moves(&moves);
 
@@ -112,7 +96,7 @@ pub fn do_game_white(depth: usize) {
             game.make_move(&moves[index]);
         }
     }
-}
+}*/
 
 /*pub fn do_game_white(depth: usize) {
     let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);

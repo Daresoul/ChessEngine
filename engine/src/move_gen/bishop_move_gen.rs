@@ -1,5 +1,5 @@
 use crate::magic::magic::Magic;
-use crate::move_gen::move_gen::Direction::{East, North, NorthEast, NorthWest, South, SouthEast, SouthWest, West};
+use crate::move_gen::move_gen::Direction::{NorthEast, NorthWest, SouthEast, SouthWest};
 use crate::move_gen::move_gen::MoveGen;
 
 impl MoveGen {
