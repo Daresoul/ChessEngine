@@ -49,11 +49,9 @@ pub(crate) mod engine {
             game.get_all_moves();
             let mut stopped: bool = false;
 
-            let moves = if is_maximizing { game.white_moves } else { game.black_moves };
-            let max = if is_maximizing {game.white_moves_len} else {game.black_moves_len};
+            let moves = if is_maximizing { &game.white_moves } else { &game.black_moves };
 
-            for (i, mv) in moves.iter().enumerate()  {
-                if i == max {break;}
+            for mv in moves.iter()  {
                 if !stopped {
                     let mut new_game = game.clone();
                     new_game.make_move(mv);
@@ -109,11 +107,9 @@ pub(crate) mod engine {
 
             game.get_all_moves();
 
-            let moves = if is_maximizing { game.white_moves } else { game.black_moves };
-            let max = if is_maximizing {game.white_moves_len} else {game.black_moves_len};
+            let moves = if is_maximizing { &game.white_moves } else { &game.black_moves };
 
-            for (i, m) in moves.iter().enumerate() {
-                if i == max {break;}
+            for m in moves.iter() {
                 let mut new_game = game.clone();
                 new_game.make_move(m);
 

@@ -7,6 +7,7 @@ mod debug;
 mod constants;
 mod eval_board;
 mod utils;
+mod move_list;
 
 use std::env;
 

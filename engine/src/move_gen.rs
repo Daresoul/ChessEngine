@@ -23,12 +23,13 @@ pub mod move_gen {
 
     #[derive(Debug, Clone, Copy)]
     pub enum PieceType {
-        PAWN,
-        ROOK,
-        KING,
-        KNIGHT,
-        BISHOP,
-        QUEEN,
+        None = 0,
+        PAWN = 1,
+        ROOK = 2,
+        KING = 3,
+        KNIGHT = 4,
+        BISHOP = 5,
+        QUEEN = 6,
     }
 
     impl PartialEq for PieceType {
@@ -70,6 +71,12 @@ pub mod move_gen {
                         _ => false
                     }
                 },
+                PieceType::None => {
+                    match other {
+                        PieceType::None => true,
+                        _ => false
+                    }
+                }
             }
         }
     }

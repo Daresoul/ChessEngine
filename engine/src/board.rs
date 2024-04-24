@@ -5,6 +5,7 @@ pub mod board {
     use crate::board::board::Side::{Left, Right};
     use crate::move_gen::move_gen::{MoveGen, PieceType};
     use crate::move_gen::move_gen::PieceType::{BISHOP, KNIGHT, PAWN, QUEEN, ROOK};
+    use crate::move_list::move_list::{AttackMoveList, MoveList};
 
     // 1: pawn
     // 2: knight
@@ -23,12 +24,13 @@ pub mod board {
     }
 
     #[derive(Debug, Clone, Copy)]
+    #[repr(u8)]
     pub enum Move {
+        None = 0,
         Standard(u8, u8, PieceType), // position, to, piecetype
         Capture(u8, u8, PieceType, PieceType),// from, to, moving piece, captured piece
         Promotion(u8, u8, PieceType), // from, to, piece to promote too
         Castle(u8, Side), // king position, side to castle
-        None
     }
 
     impl Eq for Move {}
@@ -352,11 +354,8 @@ pub mod board {
             return attackBoard;
         }
 
-        pub fn attack_boards_to_moves(&self, move_boards: &[BoardMove; 16], moves_arr: &mut [Move; 250], is_white: bool) -> usize {
-            let mut len: usize = 0;
-
-
-            for x in move_boards {
+        pub fn attack_boards_to_moves(&self, move_boards: &AttackMoveList, moves_arr: &mut MoveList, is_white: bool) {
+            for x in move_boards.iter() {
                 let bits = x.attack_board.count_ones();
                 let mut attack_board = x.attack_board;
                 for _ in 0..bits {
@@ -366,23 +365,18 @@ pub mod board {
                         let promotion_rank = if is_white { index < 8} else {index > 56};
 
                         if promotion_rank {
-                            moves_arr[len] = Promotion(x.position, index as u8, KNIGHT);
-                            moves_arr[len + 1] = Promotion(x.position, index as u8, BISHOP);
-                            moves_arr[len + 2] = Promotion(x.position, index as u8, QUEEN);
-                            moves_arr[len + 3] = Promotion(x.position, index as u8, ROOK);
-                            len += 4;
+                            moves_arr.add(Promotion(x.position, index as u8, KNIGHT));
+                            moves_arr.add(Promotion(x.position, index as u8, BISHOP));
+                            moves_arr.add(Promotion(x.position, index as u8, QUEEN));
+                            moves_arr.add(Promotion(x.position, index as u8, ROOK));
                         } else {
-                            moves_arr[len] = Standard(x.position, index as u8, PAWN);
-                            len += 1;
+                            moves_arr.add(Standard(x.position, index as u8, PAWN));
                         }
                     } else {
-                        moves_arr[len] = Standard(x.position, index as u8, PAWN);
-                        len += 1;
+                        moves_arr.add(Standard(x.position, index as u8, PAWN));
                     }
                 }
             }
-
-            return len;
         }
 
         pub fn get_captured_board(&self, pos: &u8, is_white: bool) -> Option<PieceType> {
@@ -497,7 +491,8 @@ pub mod board {
                 KNIGHT => {
                     let board = if is_white {&mut self.white_knight_board} else {&mut self.black_knight_board};
                     Self::movePiece(board, from, to);
-                }
+                },
+                PieceType::None => panic!("Cant make a move on a None")
             };
         }
 
@@ -508,9 +503,7 @@ pub mod board {
             bit_pos as usize
         }
 
-        pub fn get_moves(&self, team_occupancy: u64, opponent_occupancy: u64, occupancy: u64, is_white: bool, moves_array: &mut [BoardMove; 16], move_gen: &MoveGen) -> usize {
-            let mut len = 0;
-
+        pub fn get_moves(&self, team_occupancy: u64, opponent_occupancy: u64, occupancy: u64, is_white: bool, moves_array: &mut AttackMoveList, move_gen: &MoveGen) {
             let mut white_knight_board = if is_white {self.white_knight_board} else {self.black_knight_board};
             let mut white_rook_board = if is_white {self.white_rook_board} else {self.black_rook_board};
             let mut white_bishop_board = if is_white {self.white_bishop_board} else {self.black_bishop_board};
@@ -525,8 +518,7 @@ pub mod board {
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array[len] = b;
-                len += 1;
+                moves_array.add(b);
             }
 
             for _ in 0..(white_rook_board.count_ones() as usize) {
@@ -537,8 +529,7 @@ pub mod board {
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array[len] = b;
-                len += 1;
+                moves_array.add(b);
             }
 
             for _ in 0..(white_bishop_board.count_ones() as usize) {
@@ -549,8 +540,7 @@ pub mod board {
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array[len] = b;
-                len += 1;
+                moves_array.add(b);
             }
 
             for _ in 0..(white_queen_board.count_ones() as usize) {
@@ -561,8 +551,7 @@ pub mod board {
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array[len] = b;
-                len += 1;
+                moves_array.add(b);
             }
 
             for _ in 0..(white_pawn_board.count_ones() as usize) {
@@ -573,11 +562,8 @@ pub mod board {
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array[len] = b;
-                len += 1;
+                moves_array.add(b)
             }
-
-            return len;
         }
 
         // TODO: Recreate

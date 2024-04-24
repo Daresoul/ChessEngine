@@ -7,6 +7,8 @@ mod Constants;
 mod magic;
 mod move_gen;
 
+mod move_list;
+
 /*
 Calculate moves for pieces only that are affected by the precious move.
 That means, if u move a piece, go through all moves, and see which pieces are affected.
