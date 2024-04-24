@@ -1,7 +1,8 @@
 pub mod board {
     use std::cmp::Ordering;
+    use PieceType::KING;
     use crate::board::board::Move::{Capture, Castle, Promotion, Standard};
-    use crate::board::board::Side::Right;
+    use crate::board::board::Side::{Left, Right};
     use crate::move_gen::move_gen::{MoveGen, PieceType};
     use crate::move_gen::move_gen::PieceType::{BISHOP, KNIGHT, PAWN, QUEEN, ROOK};
 
@@ -513,7 +514,7 @@ pub mod board {
 
             for i in 0..64 {
                 if (self.white_knight_board & 1 << i) > 0 {
-                    let reverse_board: u64 = (0xFFFF_FFFF_FFFF_FFFF ^ white_occupancy) & pieces.knight_position_board[i];
+                    let reverse_board: u64 = pieces.knight_position_board[i] & !white_occupancy;
                     let b = BoardMove {
                         attack_board: reverse_board,
                         piece_type: KNIGHT,

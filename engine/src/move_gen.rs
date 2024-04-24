@@ -4,7 +4,7 @@ mod bishop_move_gen;
 
 pub mod move_gen {
     use log::debug;
-    use PieceType::{BISHOP, KNIGHT, QUEEN, ROOK};
+    use PieceType::{BISHOP, KING, KNIGHT, QUEEN, ROOK};
     use crate::debug::debug;
     use crate::debug::debug::print_bitboard_board;
     use crate::magic::magic;
@@ -45,9 +45,9 @@ pub mod move_gen {
                         _ => false
                     }
                 },
-                PieceType::KING => {
+                KING => {
                     match other {
-                        PieceType::KING => true,
+                        KING => true,
                         _ => false
                     }
                 },
@@ -109,6 +109,9 @@ pub mod move_gen {
 
         pub fn get_move(&self, p: PieceType, pos: usize, team_occupancy: u64, occupancy: u64) -> u64 {
             match p {
+                KNIGHT => {
+                    self.knight_position_board[pos] & !team_occupancy
+                },
                 ROOK => {
                     self.get_rook_moves(pos, occupancy) & !team_occupancy
                 },
@@ -117,6 +120,9 @@ pub mod move_gen {
                 },
                 QUEEN => {
                     (self.get_bishop_moves(pos, occupancy) | self.get_rook_moves(pos, occupancy)) & !team_occupancy
+                },
+                KING => {
+                    self.king_position_board[pos] & !team_occupancy
                 }
                 _ => panic!("Not supported piece moved: {:?}", p)
             }

@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use chess_game::game::game::Game;
+use engine::game::game::Game;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
