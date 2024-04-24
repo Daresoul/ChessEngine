@@ -6,6 +6,7 @@ mod board;
 mod debug;
 mod constants;
 mod eval_board;
+mod utils;
 
 use std::env;
 

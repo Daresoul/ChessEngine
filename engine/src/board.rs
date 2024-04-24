@@ -509,55 +509,78 @@ pub mod board {
         }
 
 
-        pub fn get_white_moves(&self, white_occupancy: u64, black_occupancy: u64, occupancy: u64, pieces: &MoveGen) -> Vec<BoardMove> {
+        pub fn pop_lsb(mask: &mut u64) -> usize {
+            let bit_pos = mask.trailing_zeros();
+            *mask &= *mask - 1;
+            bit_pos as usize
+        }
+
+        pub fn get_white_moves(&self, white_occupancy: u64, black_occupancy: u64, occupancy: u64, move_gen: &MoveGen) -> Vec<BoardMove> {
             let mut moves: Vec<BoardMove> = Vec::with_capacity(16);
 
-            for i in 0..64 {
-                if (self.white_knight_board & 1 << i) > 0 {
-                    let reverse_board: u64 = pieces.knight_position_board[i] & !white_occupancy;
-                    let b = BoardMove {
-                        attack_board: reverse_board,
-                        piece_type: KNIGHT,
-                        position: u8::try_from(i).unwrap(),
-                        white: true,
-                    };
-                    moves.push(b);
-                    continue
-                }
+            let mut white_knight_board = self.white_knight_board;
+            let mut white_rook_board = self.white_rook_board;
+            let mut white_bishop_board = self.white_bishop_board;
+            let mut white_queen_board = self.white_queen_board;
 
-                if (self.white_rook_board & 1 << i) > 0 {
-                    let b = BoardMove {
-                        attack_board: pieces.get_move(ROOK, i, white_occupancy, occupancy),
-                        piece_type: ROOK,
-                        position: u8::try_from(i).unwrap(),
-                        white: true,
-                    };
-                    moves.push(b);
-                    continue
-                }
+            for _ in 0..(white_knight_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut white_knight_board);
+                let b = BoardMove {
+                    attack_board: move_gen.get_move(KNIGHT, lsb, white_occupancy, occupancy),
+                    piece_type: KNIGHT,
+                    position: u8::try_from(lsb).unwrap(),
+                    white: true,
+                };
+                moves.push(b);
+            }
 
-                if (self.white_bishop_board & 1 << i) > 0 {
-                    let b = BoardMove {
-                        attack_board: pieces.get_move(BISHOP, i, white_occupancy, occupancy),
-                        piece_type: BISHOP,
-                        position: u8::try_from(i).unwrap(),
-                        white: true,
-                    };
-                    moves.push(b);
-                    continue
-                }
+            for _ in 0..(white_rook_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut white_rook_board);
+                let b = BoardMove {
+                    attack_board: move_gen.get_move(ROOK, lsb, white_occupancy, occupancy),
+                    piece_type: ROOK,
+                    position: u8::try_from(lsb).unwrap(),
+                    white: true,
+                };
+                moves.push(b);
+            }
 
-                if (self.white_queen_board & 1 << i) > 0 {
-                    let b = BoardMove {
-                        attack_board: pieces.get_move(QUEEN, i, white_occupancy, occupancy),
-                        piece_type: QUEEN,
-                        position: u8::try_from(i).unwrap(),
-                        white: true,
-                    };
-                    moves.push(b);
-                    continue
-                }
+            for _ in 0..(white_bishop_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut white_bishop_board);
+                let b = BoardMove {
+                    attack_board: move_gen.get_move(BISHOP, lsb, white_occupancy, occupancy),
+                    piece_type: BISHOP,
+                    position: u8::try_from(lsb).unwrap(),
+                    white: true,
+                };
+                moves.push(b);
+            }
 
+            for _ in 0..(white_queen_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut white_queen_board);
+                let b = BoardMove {
+                    attack_board: move_gen.get_move(QUEEN, lsb, white_occupancy, occupancy),
+                    piece_type: QUEEN,
+                    position: u8::try_from(lsb).unwrap(),
+                    white: true,
+                };
+                moves.push(b);
+            }
+
+            for _ in 0..(white_queen_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut white_queen_board);
+                let b = BoardMove {
+                    attack_board: move_gen.calculate_white_pawn_move(lsb, occupancy, black_occupancy),
+                    piece_type: PAWN,
+                    position: u8::try_from(lsb).unwrap(),
+                    white: true,
+                };
+                moves.push(b);
+            }
+
+
+
+/*
                 if (self.white_pawn_board & 1 << i) > 0 {
                     let b = BoardMove {
                         attack_board: pieces.calculate_white_pawn_move(u64::try_from(i).unwrap(), occupancy, black_occupancy),
@@ -567,8 +590,7 @@ pub mod board {
                     };
                     moves.push(b);
                     continue
-                }
-            }
+                }*/
 
             return moves;
         }

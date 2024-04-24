@@ -1,8 +1,8 @@
 pub mod utils {
-    pub fn pop_lsb(mask: &mut u64) -> u32 {
+    pub fn pop_lsb(mask: &mut u64) -> usize {
         let bit_pos = mask.trailing_zeros();
         *mask &= *mask - 1;
-        bit_pos
+        bit_pos as usize
     }
 
     pub fn bitscan_forward(board: u64) -> Option<usize> {
