@@ -4,7 +4,6 @@ mod magic;
 mod game;
 mod board;
 mod debug;
-mod constants;
 mod eval_board;
 mod utils;
 mod move_list;
@@ -31,14 +30,14 @@ fn main() {
 
 
 //    do_game_white(depth);
-    //do_game_white(6);
+    do_game_white(2);
 }
 
 pub fn print_moves(m: &Vec<Move>) {
     for i in 0..m.len() {
         match m[i] {
-            Standard(pos, to, ptype) => println!("{}: {} -> {} as {:?}", i, pos, to, ptype),
-            Promotion(pos, to, ptype) => println!("{}: {} -> {} to {:?}", i, pos, to, ptype),
+            Standard(pos, to, ptype, is_white) => println!("{}: {} -> {} as {:?}", i, pos, to, ptype),
+            Promotion(pos, to, ptype, cp, is_white) => println!("{}: {} -> {} to {:?}", i, pos, to, ptype),
             _ => ()
         }
 
@@ -58,14 +57,14 @@ pub fn read_line() -> usize {
 pub fn print_branches(branches: &Vec<Branch>) -> () {
     for (i, branch) in branches.iter().enumerate() {
         match branch.m {
-            Standard(pos, to, ptype) => println!("{}: {} -> {} as {:?}", i, pos, to, ptype),
-            Promotion(pos, to, ptype) => println!("{}: {} -> {} to {:?}", i, pos, to, ptype),
+            Standard(pos, to, ptype, is_white) => println!("{}: {} -> {} as {:?} with: {}", i, pos, to, ptype, branch.val),
+            Promotion(pos, to, ptype, cp, is_white) => println!("{}: {} -> {} to {:?} with: {}", i, pos, to, ptype, branch.val),
             _ => ()
         }
     }
 }
 
-/*pub fn do_game_white(depth: usize) {
+pub fn do_game_white(depth: usize) {
 
     let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
 
@@ -74,9 +73,8 @@ pub fn print_branches(branches: &Vec<Branch>) -> () {
     loop {
         if game.is_white_turn {
             debug::debug::print_board(&game);
-            let new_game = game.clone();
             let start = Instant::now();
-            let (moves, leafs) = Engine::get_sorted_moves(&mut game,new_game.is_white_turn, depth);
+            let (moves, leafs) = Engine::get_sorted_moves(&mut game, true, depth);
             println!("Leaves after {} moves: {}", depth, leafs);
             leaves += leafs;
             println!("miliseconds elapsed: {}", start.elapsed().as_millis());
@@ -88,7 +86,7 @@ pub fn print_branches(branches: &Vec<Branch>) -> () {
             game.make_move(&moves[index].m);
         } else {
             debug::debug::print_board(&game);
-            let moves= game.get_all_moves();
+            let moves = game.get_all_moves();
             println!("move_len: {}", moves.len());
             print_moves(&moves);
 
@@ -97,46 +95,4 @@ pub fn print_branches(branches: &Vec<Branch>) -> () {
             game.make_move(&moves[index]);
         }
     }
-}*/
-
-/*pub fn do_game_white(depth: usize) {
-    let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
-    let mut leaves = 0;
-
-
-    let hasher = RandomState::new();
-    let mut map: HashMap<u64, PositionInfo> = HashMap::with_capacity_and_hasher(800000000, hasher);
-
-    loop {
-        if game.is_white_turn {
-            chess_game::debug::debug::print_board(&game);
-            println!("map size: {}", map.len());
-            let new_game = game.clone();
-            let start = Instant::now();
-            let (moves, leafs) = Engine::get_sorted_moves(&mut game, &mut map,new_game.is_white_turn, depth, true);
-            println!("Leaves after {} moves: {} and mapsize of: {}", depth, leafs, map.len());
-            leaves += leafs;
-            print_branch(&moves);
-            println!("miliseconds elapsed: {}", start.elapsed().as_millis());
-
-            let index = read_line();
-
-            game.make_move(&moves[index].m);
-        } else {
-            chess_game::debug::debug::print_board(&game);
-            let mut tr = game.get_all_moves();
-            println!("move_len: {}", tr.black_moves.len());
-            tr.black_moves.sort();
-            print_moves(&tr.black_moves);
-
-            let index = read_line();
-
-            game.make_move(&tr.black_moves[index]);
-        }
-    }
-
-    //println!("seconds elapsed: {}", start.elapsed().as_millis());
-
-    println!("average leaves: {}", leaves / 10);
-
-}*/
+}

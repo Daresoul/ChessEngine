@@ -3,6 +3,7 @@ pub mod board {
     use PieceType::KING;
     use crate::board::board::Move::{Capture, Castle, Promotion, Standard};
     use crate::board::board::Side::{Left, Right};
+    use crate::debug::debug::{print_bitboard_board, print_board_from_board};
     use crate::move_gen::move_gen::{MoveGen, PieceType};
     use crate::move_gen::move_gen::PieceType::{BISHOP, KNIGHT, PAWN, QUEEN, ROOK};
     use crate::move_list::move_list::{AttackMoveList, MoveList};
@@ -27,10 +28,10 @@ pub mod board {
     #[repr(u8)]
     pub enum Move {
         None = 0,
-        Standard(u8, u8, PieceType), // position, to, piecetype
-        Capture(u8, u8, PieceType, PieceType),// from, to, moving piece, captured piece
-        Promotion(u8, u8, PieceType), // from, to, piece to promote too
-        Castle(u8, Side), // king position, side to castle
+        Standard(u8, u8, PieceType, bool), // position, to, piecetype
+        Capture(u8, u8, PieceType, PieceType, bool),// from, to, moving piece, captured piece
+        Promotion(u8, u8, PieceType, PieceType, bool), // from, to, piece to promote too
+        Castle(u8, Side, bool), // king position, side to castle
     }
 
     impl Eq for Move {}
@@ -61,69 +62,69 @@ pub mod board {
     impl Ord for Move {
         fn cmp(&self, other: &Self) -> Ordering {
             match self {
-                Standard(from, to, _) => {
+                Standard(from, to, _, is_white) => {
                     return match other {
-                        Standard(from_, to_, _) => {
+                        Standard(from_, to_, _, is_white) => {
                             ordering(from, to, from_, to_)
                         },
-                        Promotion(from_, to_, _) => {
+                        Promotion(from_, to_, _, _, is_white) => {
                             ordering(from, to, from_, to_)
                         },
-                        Capture(from_, to_, _piece_, _captured_piece) => {
+                        Capture(from_, to_, _piece_, _captured_piece, is_white) => {
                             ordering(from, to, from_, to_)
                         }
-                        Castle(_from_, _side) => {
+                        Castle(_from_, _side, is_white) => {
                             Ordering::Less
                         },
                         Move::None => Ordering::Greater
                     }
                 },
-                Promotion(from, to, _piece) => {
+                Promotion(from, to, _piece, _, is_white) => {
                     match other {
-                        Standard(from_, to_, _) => {
+                        Standard(from_, to_, _, is_white) => {
                             return ordering(from, to, from_, to_)
                         },
-                        Promotion(from_, to_, _piece_) => {
+                        Promotion(from_, to_, _piece, _, is_white) => {
                             return ordering(from, to, from_, to_)
                         }
-                        Capture(from_, to_, _piece_, _captured_piece) => {
+                        Capture(from_, to_, _piece_, _captured_piece, is_white) => {
                             return ordering(from, to, from_, to_)
                         }
-                        Castle(_from_, _side) => {
+                        Castle(_from_, _side, is_white) => {
                             return Ordering::Less
                         },
                         Move::None => Ordering::Greater
                     }
                 }
-                Capture(from, to, _piece, _captured_piece) => {
+                Capture(from, to, _piece, _captured_piece, is_white) => {
                     match other {
-                        Standard(from_, to_, _) => {
+                        Standard(from_, to_, _, is_white) => {
                             return ordering(from, to, from_, to_)
                         },
-                        Promotion(from_, to_, _piece_) => {
+                        Promotion(from_, to_, _piece_, _, is_white) => {
                             return ordering(from, to, from_, to_)
                         }
-                        Capture(from_, to_, _piece_, _captured_piece) => {
+                        Capture(from_, to_, _piece_, _captured_piece, is_white) => {
                             return ordering(from, to, from_, to_)
                         }
-                        Castle(_from_, _side) => {
+                        Castle(_from_, _side, is_white) => {
                             return Ordering::Less
                         },
                         Move::None => Ordering::Greater
                     }
                 }
-                Castle(_from, _Side) => {
+                Castle(_from, _Side, is_white) => {
                     match other {
-                        Standard(_from_, _to_, _) => {
+                        Standard(_from_, _to_, _, is_white) => {
                             return Ordering::Greater
                         },
-                        Promotion(_from_, _to_, _piece_) => {
+                        Promotion(_from_, _to_, _piece, _, is_white) => {
                             return Ordering::Greater
                         }
-                        Capture(_from_, _to_, _piece_, _captured_piece) => {
+                        Capture(_from_, _to_, _piece_, _captured_piece, is_white) => {
                             return Ordering::Greater
                         }
-                        Castle(_from_, side) => {
+                        Castle(_from_, side, is_white) => {
                             if side == &Right {
                                 return Ordering::Greater
                             } else {
@@ -165,33 +166,33 @@ pub mod board {
     impl PartialEq<Self> for Move {
         fn eq(&self, other: &Self) -> bool {
             match self {
-                Standard(from, to, piece) => {
+                Standard(from, to, piece, is_white) => {
                     match other {
-                        Standard(from_, to_, piece_) => {
+                        Standard(from_, to_, piece_, is_white) => {
                             to == to_ && from == from_ && piece == piece_
                         },
                         _ => false
                     }
                 }
-                Promotion(from, to, piece) => {
+                Promotion(from, to, piece, captured_piece, is_white) => {
                     match other {
-                        Promotion(from_, to_, piece_) => {
-                            to == to_ && from == from_ && piece == piece_
+                        Promotion(from_, to_, piece_, captured_piece_, is_white) => {
+                            to == to_ && from == from_ && piece == piece_ && captured_piece == captured_piece_
                         },
                         _ => false
                     }
                 },
-                Capture(from, to, piece, _captured_piece) => {
+                Capture(from, to, piece, _captured_piece, is_white) => {
                     match other {
-                        Capture(_from, _to, _piece, _captured_piece) => {
+                        Capture(_from, _to, _piece, _captured_piece, is_white) => {
                             to == _to && from == _from && piece == _piece
                         },
                         _ => false
                     }
                 },
-                Castle(from, side) => {
+                Castle(from, side, is_white) => {
                     match other {
-                        Castle(_from, _side) => {
+                        Castle(_from, _side, is_white) => {
                             _from == from && _side == side
                         },
                         _ => false
@@ -354,7 +355,7 @@ pub mod board {
             return attackBoard;
         }
 
-        pub fn attack_boards_to_moves(&self, move_boards: &AttackMoveList, moves_arr: &mut MoveList, is_white: bool) {
+        pub fn attack_boards_to_moves(&self, move_boards: &Vec<BoardMove>, moves_arr: &mut Vec<Move>, is_white: bool) {
             for x in move_boards.iter() {
                 let bits = x.attack_board.count_ones();
                 let mut attack_board = x.attack_board;
@@ -365,15 +366,15 @@ pub mod board {
                         let promotion_rank = if is_white { index < 8} else {index > 56};
 
                         if promotion_rank {
-                            moves_arr.add(Promotion(x.position, index as u8, KNIGHT));
-                            moves_arr.add(Promotion(x.position, index as u8, BISHOP));
-                            moves_arr.add(Promotion(x.position, index as u8, QUEEN));
-                            moves_arr.add(Promotion(x.position, index as u8, ROOK));
+                            moves_arr.push(Promotion(x.position, index as u8, KNIGHT, PieceType::None, is_white));
+                            moves_arr.push(Promotion(x.position, index as u8, BISHOP, PieceType::None, is_white));
+                            moves_arr.push(Promotion(x.position, index as u8, QUEEN, PieceType::None, is_white));
+                            moves_arr.push(Promotion(x.position, index as u8, ROOK, PieceType::None, is_white));
                         } else {
-                            moves_arr.add(Standard(x.position, index as u8, PAWN));
+                            moves_arr.push(Standard(x.position, index as u8, PAWN, is_white));
                         }
                     } else {
-                        moves_arr.add(Standard(x.position, index as u8, PAWN));
+                        moves_arr.push(Standard(x.position, index as u8, x.piece_type, is_white));
                     }
                 }
             }
@@ -403,6 +404,10 @@ pub mod board {
                         return Some(ROOK);
                     }
 
+                    if self.white_king_board & position > 0 {
+                        return Some(KING);
+                    }
+
                     return None
                 },
                 true => {
@@ -426,6 +431,10 @@ pub mod board {
                         return Some(ROOK);
                     }
 
+                    if self.black_king_board & position > 0 {
+                        return Some(KING);
+                    }
+
                     return None
                 }
             }
@@ -438,35 +447,70 @@ pub mod board {
             *board ^= from_position;
         }
 
-        pub fn remove_piece_if_taken(&mut self, to: &u8, is_white: bool) -> () {
+        pub fn remove_piece_if_taken(&mut self, to: &u8, is_white: bool) -> PieceType {
             let to_position: u64 = 1 << to;
             match self.get_captured_board(to, is_white) {
                 Some(piece) => {
                     match piece {
-                        PAWN => { if is_white { self.black_pawn_board = self.black_pawn_board ^ to_position }
-                        else { self.white_pawn_board = self.white_pawn_board ^ to_position } }
+                        PAWN => {
+                            if is_white { self.black_pawn_board ^= to_position }
+                            else { self.white_pawn_board ^= to_position }
+                            return PAWN;
+                        }
 
-                        ROOK => { if is_white { self.black_rook_board = self.black_rook_board ^ to_position }
-                        else { self.white_rook_board = self.white_rook_board ^ to_position } }
+                        ROOK => {
+                            if is_white { self.black_rook_board ^= to_position }
+                            else { self.white_rook_board ^= to_position }
+                            return ROOK;
+                        }
 
-                        QUEEN => { if is_white { self.black_queen_board = self.black_queen_board ^ to_position }
-                        else { self.white_queen_board = self.white_queen_board ^ to_position } }
+                        QUEEN => {
+                            if is_white { self.black_queen_board ^= to_position }
+                            else { self.white_queen_board ^= to_position }
+                            return QUEEN;
+                        }
 
-                        BISHOP => { if is_white { self.black_bishop_board = self.black_bishop_board ^ to_position }
-                        else { self.white_bishop_board = self.white_bishop_board ^ to_position } }
+                        BISHOP => {
+                            if is_white { self.black_bishop_board ^= to_position }
+                            else { self.white_bishop_board ^= to_position }
+                            return BISHOP;
+                        }
 
-                        KNIGHT => { if is_white { self.black_knight_board = self.black_knight_board ^ to_position }
-                        else { self.white_knight_board = self.white_knight_board ^ to_position } }
+                        KNIGHT => {
+                            if is_white { self.black_knight_board ^= to_position }
+                            else { self.white_knight_board ^= to_position }
+                            return KNIGHT
+                        }
+
+                        KING => {
+                            if is_white { self.black_king_board ^= to_position }
+                            else { self.white_king_board ^= to_position }
+                            return KING
+                        }
 
                         _ => panic!("Umm, a captured king somehow????")
                     }
                 },
-                None => ()
+                None => return PieceType::None
             }
         }
 
-        pub fn make_move(&mut self, p: &PieceType, from: &u8, to: &u8, is_white: bool) -> () {
-            self.remove_piece_if_taken(to, is_white);
+        pub fn make_move(&mut self, p: &PieceType, from: &u8, to: &u8, is_white: bool, is_promotion: bool) -> Move {
+            let captured_piece = self.remove_piece_if_taken(to, is_white);
+
+            if is_promotion {
+                let board = if is_white {&mut self.white_pawn_board} else {&mut self.black_pawn_board};
+
+                let from_position: u64 = 1 << from;
+                *board ^= from_position;
+
+                let promotion_board = self.get_board(*p, is_white);
+                let to_position: u64 = 1 << to;
+                *promotion_board |= to_position;
+
+                return Promotion(*from, *to, *p, captured_piece, is_white)
+            }
+
             match p {
                 PAWN => {
                     let board = if is_white {&mut self.white_pawn_board} else {&mut self.black_pawn_board};
@@ -494,75 +538,187 @@ pub mod board {
                 },
                 PieceType::None => panic!("Cant make a move on a None")
             };
+
+            if captured_piece == PieceType::None {
+                return Standard(*from, *to, *p, is_white)
+            } else {
+                return Capture(*from, *to, *p, captured_piece, is_white)
+            }
+
+        }
+
+
+        pub fn get_board(&mut self, p: PieceType, is_white: bool) -> &mut u64 {
+            match p {
+                BISHOP => if is_white { &mut self.white_bishop_board } else { &mut self.black_bishop_board }
+                ROOK => if is_white { &mut self.white_rook_board } else { &mut self.black_rook_board }
+                PAWN => if is_white { &mut self.white_pawn_board } else { &mut self.black_pawn_board }
+                KNIGHT => if is_white { &mut self.white_knight_board } else { &mut self.black_knight_board }
+                QUEEN => if is_white { &mut self.white_queen_board } else { &mut self.black_queen_board }
+                KING => if is_white { &mut self.white_king_board } else { &mut self.black_king_board }
+                _ => panic!("Cant get board of None: {:?}", p)
+            }
+        }
+        pub fn undo_move(&mut self, m: Move) {
+            match m {
+                Standard(from, to, p, color) => {
+                    let board = self.get_board(p, color);
+                    let to_position = 1 << to;
+                    let from_position = 1 << from;
+                    *board ^= to_position;
+                    *board |= from_position;
+                },
+                Capture(from, to, p, cp, color) => {
+                    let moving_board = self.get_board(p, color);
+                    let to_position = 1 << to;
+                    let from_position = 1 << from;
+                    *moving_board ^= to_position;
+                    *moving_board |= from_position;
+
+                    let captured_board = self.get_board(cp, !color);
+                    *captured_board |= to_position;
+                },
+                Promotion(from, to, p, cp, color) => {
+                    let pawn_board = if color {&mut self.white_pawn_board} else {&mut self.black_pawn_board};
+                    let to_position = 1 << to;
+                    let from_position = 1 << from;
+                    *pawn_board |= from_position;
+
+                    let promoted_piece_board = self.get_board(p, color);
+                    *promoted_piece_board ^= to_position;
+
+
+                }
+                _ => panic!("Undo move does not support {:?}", m)
+            }
         }
 
 
         pub fn pop_lsb(mask: &mut u64) -> usize {
             let bit_pos = mask.trailing_zeros();
-            *mask &= *mask - 1;
+            *mask &= (*mask).saturating_sub(1);
             bit_pos as usize
         }
 
-        pub fn get_moves(&self, team_occupancy: u64, opponent_occupancy: u64, occupancy: u64, is_white: bool, moves_array: &mut AttackMoveList, move_gen: &MoveGen) {
-            let mut white_knight_board = if is_white {self.white_knight_board} else {self.black_knight_board};
-            let mut white_rook_board = if is_white {self.white_rook_board} else {self.black_rook_board};
-            let mut white_bishop_board = if is_white {self.white_bishop_board} else {self.black_bishop_board};
-            let mut white_queen_board = if is_white {self.white_queen_board} else {self.black_queen_board};
-            let mut white_pawn_board = if is_white {self.white_pawn_board} else {self.black_pawn_board};
+        pub fn get_moves(&self, team_occupancy: u64, opponent_occupancy: u64, occupancy: u64, is_white: bool, moves_array: &mut Vec<BoardMove>, move_gen: &MoveGen){
 
-            for _ in 0..(white_knight_board.count_ones() as usize) {
-                let lsb = Self::pop_lsb(&mut white_knight_board);
+            let mut knight_board = if is_white {self.white_knight_board} else {self.black_knight_board};
+            let mut rook_board = if is_white {self.white_rook_board} else {self.black_rook_board};
+            let mut bishop_board = if is_white {self.white_bishop_board} else {self.black_bishop_board};
+            let mut queen_board = if is_white {self.white_queen_board} else {self.black_queen_board};
+            let mut pawn_board = if is_white {self.white_pawn_board} else {self.black_pawn_board};
+
+            for _ in 0..(knight_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut knight_board);
                 let b = BoardMove {
-                    attack_board: move_gen.get_move(KNIGHT, lsb, team_occupancy, occupancy),
+                    attack_board: move_gen.get_move(KNIGHT, lsb, team_occupancy, occupancy, opponent_occupancy, is_white),
                     piece_type: KNIGHT,
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array.add(b);
+                moves_array.push(b);
             }
 
-            for _ in 0..(white_rook_board.count_ones() as usize) {
-                let lsb = Self::pop_lsb(&mut white_rook_board);
+            for _ in 0..(rook_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut rook_board);
                 let b = BoardMove {
-                    attack_board: move_gen.get_move(ROOK, lsb, team_occupancy, occupancy),
+                    attack_board: move_gen.get_move(ROOK, lsb, team_occupancy, occupancy, opponent_occupancy, is_white),
                     piece_type: ROOK,
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array.add(b);
+                moves_array.push(b);
             }
 
-            for _ in 0..(white_bishop_board.count_ones() as usize) {
-                let lsb = Self::pop_lsb(&mut white_bishop_board);
+            for _ in 0..(bishop_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut bishop_board);
                 let b = BoardMove {
-                    attack_board: move_gen.get_move(BISHOP, lsb, team_occupancy, occupancy),
+                    attack_board: move_gen.get_move(BISHOP, lsb, team_occupancy, occupancy, opponent_occupancy, is_white),
                     piece_type: BISHOP,
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array.add(b);
+                moves_array.push(b);
             }
 
-            for _ in 0..(white_queen_board.count_ones() as usize) {
-                let lsb = Self::pop_lsb(&mut white_queen_board);
+            for _ in 0..(queen_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut queen_board);
                 let b = BoardMove {
-                    attack_board: move_gen.get_move(QUEEN, lsb, team_occupancy, occupancy),
+                    attack_board: move_gen.get_move(QUEEN, lsb, team_occupancy, occupancy, opponent_occupancy, is_white),
                     piece_type: QUEEN,
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array.add(b);
+                moves_array.push(b);
             }
 
-            for _ in 0..(white_pawn_board.count_ones() as usize) {
-                let lsb = Self::pop_lsb(&mut white_pawn_board);
+            for _ in 0..(pawn_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut pawn_board);
                 let b = BoardMove {
                     attack_board: if is_white {move_gen.calculate_white_pawn_move(lsb, occupancy, opponent_occupancy)} else {move_gen.calculate_black_pawn_move(lsb, occupancy, opponent_occupancy)},
                     piece_type: PAWN,
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };
-                moves_array.add(b)
+                moves_array.push(b)
+            }
+
+            if moves_array.capacity() != 16 {
+                print_board_from_board(&self);
+                Self::pretty_print_board_move(&moves_array);
+                panic!("Moves array size changed with new size {}!", moves_array.len())
+            }
+        }
+
+        pub fn check_for_multiple_pieces(&self, pos: usize) -> usize {
+            let mut count = 0;
+            let position = 1_u64 << pos;
+
+            if position & self.white_pawn_board > 0 {
+                count += 1;
+            }
+            if position & self.black_pawn_board > 0 {
+                count += 1;
+            }
+            if position & self.black_knight_board > 0 {
+                count += 1;
+            }
+            if position & self.white_knight_board > 0 {
+                count += 1;
+            }
+            if position & self.black_bishop_board > 0 {
+                count += 1;
+            }
+            if position & self.white_bishop_board > 0 {
+                count += 1;
+            }
+            if position & self.white_queen_board > 0 {
+                count += 1;
+            }
+            if position & self.black_queen_board > 0 {
+                count += 1;
+            }
+            if position & self.black_king_board > 0 {
+                count += 1;
+            }
+            if position & self.white_king_board > 0 {
+                count += 1;
+            }
+            if position & self.black_rook_board > 0 {
+                count += 1;
+            }
+            if position & self.white_rook_board > 0 {
+                count += 1;
+            }
+
+            return count
+
+        }
+
+
+        pub fn pretty_print_board_move(arr: &Vec<BoardMove>) {
+            for x in arr.iter() {
+                println!("{} - {} - {:?} - {}", x.attack_board, x.position, x.piece_type, x.white)
             }
         }
 

@@ -2,7 +2,9 @@ pub(crate) mod engine {
     use std::cmp::Ordering;
     use std::fmt::{Debug};
     use crate::board::board::Move;
+    use crate::debug::debug::print_board;
     use crate::game::game::Game;
+    use crate::print_moves;
 
 
     #[derive(Debug)]
@@ -38,7 +40,7 @@ pub(crate) mod engine {
     }
 
     impl Engine {
-        pub fn get_sorted_moves(game: &mut Game, is_maximizing: bool, depth: usize,) -> (Vec<Branch>, usize) {
+        pub fn get_sorted_moves(game: &mut Game, is_maximizing: bool, depth: usize) -> (Vec<Branch>, usize) {
             let mut sorted_moves: Vec<Branch> = vec![];
 
             let mut alpha = i32::MIN;
@@ -46,17 +48,19 @@ pub(crate) mod engine {
 
             let mut all_leafs = 0;
 
-            game.get_all_moves();
+            let moves = game.get_all_moves();
+
+            let mut i = 1;
+
             let mut stopped: bool = false;
-
-            let moves = if is_maximizing { &game.white_moves } else { &game.black_moves };
-
-            for mv in moves.iter()  {
+            //println!("moves to look through: {}", moves.len());
+            for mv in moves.iter() {
                 if !stopped {
-                    let mut new_game = game.clone();
-                    new_game.make_move(mv);
+                    game.make_move(mv);
 
-                    let (value, leafs) = Engine::alpha_beta_from_internet(&mut new_game, !is_maximizing, alpha, beta, depth);
+                    let (value, leafs) = Engine::alpha_beta_from_internet(game, !is_maximizing, alpha, beta, depth - 1);
+
+                    game.undo_move();
 
                     sorted_moves.push(Branch {
                         m: *mv,
@@ -74,6 +78,9 @@ pub(crate) mod engine {
                     if beta <= alpha {
                         stopped = true;
                     }
+
+                    //println!("Ending move {} with: {}, leafs: {}", i, value, leafs);
+                    i += 1;
                 } else {
                     sorted_moves.push(Branch {
                         m: *mv,
@@ -99,21 +106,25 @@ pub(crate) mod engine {
             depth: usize
         ) -> (i32, usize) {
             let mut leaves = 0;
-            let mut val = 0;
+            let mut val = if is_maximizing {i32::MIN} else {i32::MAX};
+
+            //println!("depth: {}", depth);
 
             if depth == 0 {
                 return (game.evaluate_board(), 1)
             }
 
-            game.get_all_moves();
-
-            let moves = if is_maximizing { &game.white_moves } else { &game.black_moves };
+            let moves = game.get_all_moves();
 
             for m in moves.iter() {
-                let mut new_game = game.clone();
-                new_game.make_move(m);
 
-                let (score, leave) = Engine::alpha_beta_from_internet(&mut new_game, !is_maximizing, alpha, beta, depth - 1);
+                game.make_move(m);
+
+                let (score, leave) = Engine::alpha_beta_from_internet(game, !is_maximizing, alpha, beta, depth - 1);
+
+                //println!("Score: {}", score);
+
+                game.undo_move();
 
                 if is_maximizing {
                     val = val.max(score);

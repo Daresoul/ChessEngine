@@ -1,4 +1,5 @@
 use Direction::{NorthEast, NorthWest};
+use crate::debug::debug::print_bitboard_board;
 use crate::move_gen::move_gen::Direction::{East, North, South, SouthEast, SouthWest, West};
 use crate::move_gen::move_gen::{Direction, MoveGen};
 
@@ -56,6 +57,37 @@ impl MoveGen {
             }
 
             self.knight_position_board[i] = moves;
+        }
+    }
+
+    pub fn init_pawn_moves(&mut self) -> () {
+        for pos in 0..64 {
+            let mut white_res: u64 = 0;
+            let mut black_res: u64 = 0;
+            let position = 1_u64 << pos;
+            let h_file: u64 = 0x0101010101010101;
+            let a_file: u64 = 0x8080808080808080;
+            let rank1: u64 = 0x00000000000000FF;
+            let rank8: u64 = 0xFF00000000000000;
+
+            if position & a_file == 0 && position & rank1 == 0 {
+                white_res = white_res | 1_u64.overflowing_shl(pos - 7).0;
+            }
+
+            if position & h_file == 0 && position & rank1 == 0 {
+                white_res = white_res | 1_u64.overflowing_shl(pos - 9).0;
+            }
+
+            if position & h_file == 0 && position & rank8 == 0 {
+                black_res = black_res | 1_u64.overflowing_shl(pos + 7).0;
+            }
+
+            if position & a_file == 0 && position & rank8 == 0 {
+                black_res = black_res | 1_u64.overflowing_shl(pos + 9).0;
+            }
+
+            self.white_pawn_table[pos as usize] = white_res;
+            self.black_pawn_table[pos as usize] = black_res;
         }
     }
 

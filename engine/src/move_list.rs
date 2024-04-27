@@ -11,7 +11,7 @@ pub mod move_list {
 
     #[derive(Clone)]
     pub struct AttackMoveList {
-        pub attack_boards: [BoardMove; 16],
+        pub attack_boards: [Option<BoardMove>; 16],
         pub len: usize
     }
 
@@ -36,6 +36,7 @@ pub mod move_list {
             unsafe {
                 write_bytes(self.moves.as_mut_ptr(), 0, self.moves.len());
             }
+            self.len = 0;
         }
     }
 
@@ -43,21 +44,16 @@ pub mod move_list {
 
         pub fn init() -> AttackMoveList {
             AttackMoveList {
-                attack_boards: [BoardMove {
-                    attack_board: 0,
-                    piece_type: PieceType::None,
-                    position: 0,
-                    white: false,
-                }; 16],
+                attack_boards: [None; 16],
                 len: 0
             }
         }
-        pub fn iter(&self) -> std::slice::Iter<'_, BoardMove> {
+        pub fn iter(&self) -> std::slice::Iter<'_, Option<BoardMove>> {
             self.attack_boards[0..self.len].iter()
         }
 
         pub fn add(&mut self, m: BoardMove) -> () {
-            self.attack_boards[self.len] = m;
+            self.attack_boards[self.len] = Some(m);
             self.len += 1;
         }
 
@@ -65,6 +61,7 @@ pub mod move_list {
             unsafe {
                 write_bytes(self.attack_boards.as_mut_ptr(), 0, self.attack_boards.len());
             }
+            self.len = 0;
         }
     }
 }

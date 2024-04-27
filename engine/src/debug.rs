@@ -22,6 +22,20 @@ pub mod debug
         }
     }
 
+    pub fn print_board_from_board(board: &Board) {
+        println!("Board:");
+
+        for i in 0..8 {
+            for j in 0..8 {
+                let currentVal = i * 8 + j;
+                let currentBitVal = 1 << currentVal;
+
+                print!("[{: ^width$} ({: ^2})]", getCheckPieceAtPosition(board, currentBitVal), currentVal, width = 3);
+            }
+            println!();
+        }
+    }
+
     pub fn print_bitboard_board(num: &u64) {
         for i in 0..8 {
             for j in 0..8 {

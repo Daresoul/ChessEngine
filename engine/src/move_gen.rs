@@ -4,7 +4,7 @@ mod bishop_move_gen;
 
 pub mod move_gen {
     
-    use PieceType::{BISHOP, KING, KNIGHT, QUEEN, ROOK};
+    use PieceType::{BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK};
     
     
     use crate::magic::magic;
@@ -35,9 +35,9 @@ pub mod move_gen {
     impl PartialEq for PieceType {
         fn eq(&self, other: &Self) -> bool {
             match self {
-                PieceType::PAWN => {
+                PAWN => {
                     match other {
-                        PieceType::PAWN => true,
+                        PAWN => true,
                         _ => false
                     }
                 },
@@ -90,7 +90,9 @@ pub mod move_gen {
         pub rook_table: Vec<u64>,//[u64; 102_400],
         pub bishop_masks: Vec<u64>,//[u64; 64],
         pub bishop_magics: Vec<Magic>, //[Magic; 64],
-        pub bishop_table: Vec<u64>//[u64; 5_248]
+        pub bishop_table: Vec<u64>,//[u64; 5_248]
+        pub white_pawn_table: Vec<u64>,
+        pub black_pawn_table: Vec<u64>
     }
 
     impl MoveGen {
@@ -104,18 +106,21 @@ pub mod move_gen {
                 bishop_masks: vec![0; 64],
                 bishop_magics: vec![Magic {magic_number: 0, offset: 0, shift: 0, mask: 0}; 64],
                 bishop_table: vec![0; 5_248],
+                white_pawn_table: vec![0; 64],
+                black_pawn_table: vec![0; 64],
             };
 
             p.calculate_knight_moves();
             p.calculate_king_moves();
             p.generate_rook_masks();
             p.generate_bishop_masks();
+            p.init_pawn_moves();
             p.init_rook_magics();
             p.init_bishop_magics();
             return p
         }
 
-        pub fn get_move(&self, p: PieceType, pos: usize, team_occupancy: u64, occupancy: u64) -> u64 {
+        pub fn get_move(&self, p: PieceType, pos: usize, team_occupancy: u64, occupancy: u64, opponent_occupancy: u64, is_white: bool) -> u64 {
             match p {
                 KNIGHT => {
                     self.knight_position_board[pos] & !team_occupancy
@@ -132,8 +137,33 @@ pub mod move_gen {
                 KING => {
                     self.king_position_board[pos] & !team_occupancy
                 }
+                PAWN => {
+                    let negated_occupancy = !occupancy;
+                    let mut res = 0;
+                    res |= if is_white {self.white_pawn_table[pos] & opponent_occupancy} else {self.black_pawn_table[pos] & opponent_occupancy};
+                    let single_move = if is_white {Self::white_pawn_move(pos, 8) & negated_occupancy} else {Self::black_pawn_move(pos, 8) & negated_occupancy};
+                    res |= single_move;
+                    if single_move > 0 {
+                        res |= if is_white {Self::white_pawn_move(pos, 16) & negated_occupancy} else {Self::black_pawn_move(pos, 16) & negated_occupancy};
+                    }
+                    res
+                }
                 _ => panic!("Not supported piece moved: {:?}", p)
             }
+        }
+
+        fn white_pawn_move(pos: usize, additive: usize) -> u64 {
+            if additive > pos {
+                return 0
+            }
+            1_u64.overflowing_shl((pos - additive) as u32).0
+        }
+
+        fn black_pawn_move(pos: usize, additive: usize) -> u64 {
+            if additive + pos > 63 {
+                return 0
+            }
+            1_u64.overflowing_shl((pos + additive) as u32).0
         }
     }
 }
