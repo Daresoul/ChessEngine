@@ -75,14 +75,20 @@ mod eval_board {
             [59,89,45,-1,-1,45,89,59]
         ];
 
+        const PAWN_VALUE: i32 = 124;
+        const QUEEN_VALUE: i32 = 2538;
+        const ROOK_VALUE: i32 = 1276;
+        const BISHOP_VALUE: i32 = 825;
+        const KNIGHT_VALUE: i32 = 781;
+
         pub fn count_pieces_white(&self) -> i32 {
             let mut sum: i32 = 0;
 
-            sum += utils::count_ones_i32(self.board.white_pawn_board) * 124;
-            sum += utils::count_ones_i32(self.board.white_queen_board) * 2538;
-            sum += utils::count_ones_i32(self.board.white_rook_board) * 1276;
-            sum += utils::count_ones_i32(self.board.white_bishop_board) * 825;
-            sum += utils::count_ones_i32(self.board.white_knight_board) * 781;
+            sum += utils::count_ones_i32(self.board.white_pawn_board) * Self::PAWN_VALUE;
+            sum += utils::count_ones_i32(self.board.white_queen_board) * Self::QUEEN_VALUE;
+            sum += utils::count_ones_i32(self.board.white_rook_board) * Self::ROOK_VALUE;
+            sum += utils::count_ones_i32(self.board.white_bishop_board) * Self::BISHOP_VALUE;
+            sum += utils::count_ones_i32(self.board.white_knight_board) * Self::KNIGHT_VALUE;
 
             return sum;
         }
@@ -91,17 +97,27 @@ mod eval_board {
         pub fn count_pieces_black(&self) -> i32 {
             let mut sum = 0;
 
-            sum += utils::count_ones_i32(self.board.black_pawn_board) * 124;
-            sum += utils::count_ones_i32(self.board.black_queen_board) * 2538;
-            sum += utils::count_ones_i32(self.board.black_rook_board) * 1276;
-            sum += utils::count_ones_i32(self.board.black_bishop_board) * 825;
-            sum += utils::count_ones_i32(self.board.black_knight_board) * 781;
+            sum += utils::count_ones_i32(self.board.black_pawn_board) * Self::PAWN_VALUE;
+            sum += utils::count_ones_i32(self.board.black_queen_board) * Self::QUEEN_VALUE;
+            sum += utils::count_ones_i32(self.board.black_rook_board) * Self::ROOK_VALUE;
+            sum += utils::count_ones_i32(self.board.black_bishop_board) * Self::BISHOP_VALUE;
+            sum += utils::count_ones_i32(self.board.black_knight_board) * Self::KNIGHT_VALUE;
 
             return sum;
         }
 
 
         pub fn evaluate_board(&self) -> i32 {
+            
+            if self.board.white_king_board == 0 {
+                return i32::MIN
+            }
+            
+            if self.board.black_king_board == 0 {
+                return i32::MAX
+            }
+            
+            
             let mut eval = 0;
             let white_pieces_eval = self.count_pieces_white();
             let black_pieces_eval = self.count_pieces_black();

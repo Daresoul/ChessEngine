@@ -41,13 +41,13 @@ pub fn print_moves(m: &Vec<Move>) {
     }
 }
 
-pub fn read_line() -> usize {
+pub fn read_line() -> i32 {
     let mut buffer1 = String::new();
     stdin()
         .read_line(&mut buffer1)
         .expect("Failed to read line");
     //println!("buffer: {}", buffer1);
-    let num: usize = buffer1.trim().parse().expect("Input not an integer");
+    let num: i32 = buffer1.trim().parse().expect("Input not an integer");
     num
 }
 
@@ -62,7 +62,7 @@ pub fn do_game_white(depth: usize) {
     // "r1bqkbnr/pppp1p1p/8/4P1p1/8/2N5/PPP1PPPP/R1BQKB1R"
     // "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
-    let mut game = Game::new_from_string("r1bqkbnr/pppp1p1p/8/4P1p1/8/2N5/PPP1PPPP/R1BQKB1R".to_string(), true);
+    let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
 
     let mut leaves = 0;
 
@@ -79,16 +79,27 @@ pub fn do_game_white(depth: usize) {
 
             let index = read_line();
 
-            game.make_move(&moves[index].m);
+            if index == -1 {
+                game.undo_move()
+            } else {
+                game.make_move(&moves[index as usize].m);
+            }
         } else {
             debug::debug::print_board(&game);
-            let (moves, _, _) = game.get_all_moves();
+            let (mut moves, _, _) = game.get_all_moves();
+            
+            moves.sort_by(Engine::ordering_moves);
+            
             println!("move_len: {}", moves.len());
             print_moves(&moves);
 
             let index = read_line();
 
-            game.make_move(&moves[index]);
+            if index == -1 {
+                game.undo_move()
+            } else {
+                game.make_move(&moves[index as usize]);
+            }
         }
     }
 }

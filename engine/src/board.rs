@@ -787,6 +787,7 @@ pub mod board {
 
         pub fn get_moves(&self, team_occupancy: u64, opponent_occupancy: u64, occupancy: u64, is_white: bool, moves_array: &mut Vec<BoardMove>, move_gen: &MoveGen){
             let mut pawn_board = if is_white {self.white_pawn_board} else {self.black_pawn_board};
+            let mut king_board = if is_white {self.white_king_board} else {self.black_king_board};
 
             self.get_eval_moves(team_occupancy, opponent_occupancy, occupancy, moves_array, is_white, move_gen);
 
@@ -795,6 +796,17 @@ pub mod board {
                 let b = BoardMove {
                     attack_board: if is_white {move_gen.calculate_white_pawn_move(lsb, occupancy, opponent_occupancy)} else {move_gen.calculate_black_pawn_move(lsb, occupancy, opponent_occupancy)},
                     piece_type: PAWN,
+                    position: u8::try_from(lsb).unwrap(),
+                    white: true,
+                };
+                moves_array.push(b)
+            }
+
+            for _ in 0..(king_board.count_ones() as usize) {
+                let lsb = Self::pop_lsb(&mut king_board);
+                let b = BoardMove {
+                    attack_board: move_gen.get_move(KING, lsb, team_occupancy, occupancy, opponent_occupancy, is_white),
+                    piece_type: KING,
                     position: u8::try_from(lsb).unwrap(),
                     white: true,
                 };

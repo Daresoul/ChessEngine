@@ -131,49 +131,58 @@ pub(crate) mod engine {
 
             moves.sort_by(Self::ordering_moves);
 
-            let mut i = 1;
-
-            let mut stopped: bool = false;
-            for mv in moves.iter() {
-                if !stopped {
-                    game.make_move(mv);
-
-                    let (value, leafs) = Engine::alpha_beta_from_internet(game, !is_maximizing, alpha, beta, depth - 1);
-
+            if is_maximizing {
+                let mut max_eval = i32::MIN;
+                let mut total_leafs = 0;
+                for m in moves {
+                    game.make_move(&m);
+                    let (eval, leaves) = Self::alpha_beta_from_internet(game, false, alpha, beta, depth - 1);
+                    total_leafs += leaves;
                     game.undo_move();
 
                     sorted_moves.push(Branch {
-                        m: *mv,
-                        val: value,
-                        leafs
+                        m: m,
+                        val: eval,
+                        leafs: leaves
                     });
-                    all_leafs += leafs;
-
-                    if is_maximizing {
-                        alpha = alpha.max(value)
-                    } else {
-                        beta = beta.min(value);
-                    }
-
+                    
+                    max_eval = i32::max(eval, max_eval);
+                    alpha = i32::max(alpha, eval);
                     if beta <= alpha {
-                        stopped = true;
+                        break
                     }
-                    i += 1;
-                } else {
-                    sorted_moves.push(Branch {
-                        m: *mv,
-                        val: if is_maximizing { i32::MIN } else { i32::MAX },
-                        leafs: 0
-                    });
                 }
-            }
 
-            sorted_moves.sort();
+                sorted_moves.sort();
 
-            if !is_maximizing {
-                sorted_moves.reverse()
+                return (sorted_moves, total_leafs)
+            }else {
+                let mut min_eval = i32::MAX;
+                let mut total_leafs = 0;
+                for m in moves {
+                    game.make_move(&m);
+                    let (eval, leaves) = Self::alpha_beta_from_internet(game, true, alpha, beta, depth - 1);
+                    total_leafs += leaves;
+                    game.undo_move();
+
+                    sorted_moves.push(Branch {
+                        m: m,
+                        val: eval,
+                        leafs: leaves
+                    });
+                    
+                    min_eval = i32::min(eval, min_eval);
+                    beta = i32::min(beta, eval);
+                    if beta <= alpha {
+                        break
+                    }
+                }
+
+                sorted_moves.sort();
+                sorted_moves.reverse();
+
+                return (sorted_moves, total_leafs)
             }
-            (sorted_moves, all_leafs)
         }
 
         fn check_if_over() {
@@ -212,23 +221,11 @@ pub(crate) mod engine {
             moves.sort_by(Self::ordering_moves);
 
             if is_maximizing {
-                let shifted_position = 1_u64.overflowing_shl(game.board.black_king_board.leading_zeros()).0;
-                if attack_board_white & shifted_position > 1 {
-                    return (i32::MIN, 0)
-                }
-            } else {
-                let shifted_position = 1_u64.overflowing_shl(game.board.white_king_board.leading_zeros()).0;
-                if attack_board_black & shifted_position > 1 {
-                    return (i32::MAX, 0)
-                }
-            }
-
-            if is_maximizing {
                 let mut max_eval = i32::MIN;
                 let mut total_leafs = 0;
                 for m in moves {
                     game.make_move(&m);
-                    let (eval, leaves) = Self::alpha_beta_from_internet(game, !is_maximizing, alpha, beta, depth - 1);
+                    let (eval, leaves) = Self::alpha_beta_from_internet(game, false, alpha, beta, depth - 1);
                     total_leafs += leaves;
                     game.undo_move();
                     max_eval = i32::max(eval, max_eval);
@@ -244,7 +241,7 @@ pub(crate) mod engine {
                 let mut total_leafs = 0;
                 for m in moves {
                     game.make_move(&m);
-                    let (eval, leaves) = Self::alpha_beta_from_internet(game, !is_maximizing, alpha, beta, depth - 1);
+                    let (eval, leaves) = Self::alpha_beta_from_internet(game, true, alpha, beta, depth - 1);
                     total_leafs += leaves;
                     game.undo_move();
                     min_eval = i32::min(eval, min_eval);
@@ -258,7 +255,7 @@ pub(crate) mod engine {
             }
         }
 
-        fn ordering_moves(a: &Move, b: &Move) -> Ordering {
+        pub fn ordering_moves(a: &Move, b: &Move) -> Ordering {
             match a {
                 Move::Standard(from, to, piece, color) => match b {
                     Move::None => Ordering::Less,

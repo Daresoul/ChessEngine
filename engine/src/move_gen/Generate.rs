@@ -1,4 +1,6 @@
+use log::debug;
 use Direction::{NorthEast, NorthWest};
+use crate::debug;
 use crate::debug::debug::print_bitboard_board;
 use crate::move_gen::move_gen::Direction::{East, North, South, SouthEast, SouthWest, West};
 use crate::move_gen::move_gen::{Direction, MoveGen};
@@ -129,6 +131,7 @@ impl MoveGen {
     }
 
     pub fn calculate_black_pawn_move(&self, position: usize, occupancy: u64, opponent_occupancy: u64) -> u64{
+
         let mut result: u64 = 0;
         if position + 8 > 63 {
             return 0;
@@ -149,9 +152,9 @@ impl MoveGen {
             }
         }
 
-        if position % 8 != 0 {
+        if position % 8 != 7 {
             if position + 9 < 64 {
-                let diagonalLeftPosition = 1 << position + 9;
+                let diagonalLeftPosition = 1 << (position + 9);
                 let diagonalLeftLegal = diagonalLeftPosition & opponent_occupancy;
                 if diagonalLeftLegal > 0 {
                     result += diagonalLeftPosition;
@@ -159,14 +162,13 @@ impl MoveGen {
             }
         }
 
-        if position % 8 != 7 {
-            let diagonalRightPosition = 1 << position + 7;
+        if position % 8 != 0 {
+            let diagonalRightPosition = 1 << (position + 7);
             let diagonalRightLegal = diagonalRightPosition & opponent_occupancy;
             if diagonalRightLegal > 0 {
                 result += diagonalRightPosition;
             }
         }
-
         return result
     }
 

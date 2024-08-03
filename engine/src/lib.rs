@@ -96,12 +96,12 @@ mod tests {
     use crate::move_gen::move_gen::{MoveGen, PieceType};
     use crate::move_gen::move_gen::PieceType::{BISHOP, KNIGHT, PAWN, QUEEN, ROOK};
     use crate::utils::utils;
-
+    
     #[test]
     fn pawn_move_single_double_white() {
         let mut game = Game::new_from_string("8/3p4/8/8/8/8/3P4/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(51, 35, PAWN, true),
@@ -119,7 +119,7 @@ mod tests {
     fn pawn_move_cant_take_allied_pieces() {
         let mut game = Game::new_from_string("8/3p4/2p1p3/8/8/2P1P3/3P4/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(42, 34, PAWN, true),
@@ -138,7 +138,7 @@ mod tests {
     fn pawn_move_can_take_outside_start_squares() {
         let mut game = Game::new_from_string("8/8/3p4/2P1P3/2p1p3/3P4/8/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(43, 35, PAWN, true),
@@ -161,21 +161,21 @@ mod tests {
     fn pawn_on_edge() {
         let mut game = Game::new_from_string("1p4p1/P6P/8/8/8/8/p6p/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Promotion(8, 0, KNIGHT, PieceType::None, true),
             Promotion(8, 0, BISHOP, PieceType::None, true),
             Promotion(8, 0, QUEEN, PieceType::None, true),
             Promotion(8, 0, ROOK, PieceType::None, true),
-            Promotion(8, 1, KNIGHT, PieceType::None, true),
-            Promotion(8, 1, BISHOP, PieceType::None, true),
-            Promotion(8, 1, QUEEN, PieceType::None, true),
-            Promotion(8, 1, ROOK, PieceType::None, true),
-            Promotion(15, 6, KNIGHT, PieceType::None, true),
-            Promotion(15, 6, BISHOP, PieceType::None, true),
-            Promotion(15, 6, QUEEN, PieceType::None, true),
-            Promotion(15, 6, ROOK, PieceType::None, true),
+            Promotion(8, 1, KNIGHT, PAWN, true),
+            Promotion(8, 1, BISHOP, PAWN, true),
+            Promotion(8, 1, QUEEN, PAWN, true),
+            Promotion(8, 1, ROOK, PAWN, true),
+            Promotion(15, 6, KNIGHT, PAWN, true),
+            Promotion(15, 6, BISHOP, PAWN, true),
+            Promotion(15, 6, QUEEN, PAWN, true),
+            Promotion(15, 6, ROOK, PAWN, true),
             Promotion(15, 7, KNIGHT, PieceType::None, true),
             Promotion(15, 7, BISHOP, PieceType::None, true),
             Promotion(15, 7, QUEEN, PieceType::None, true),
@@ -193,7 +193,7 @@ mod tests {
     fn pawn_move_promotion() {
         let mut game = Game::new_from_string("8/3P4/8/8/8/8/3p4/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Promotion(11, 3, KNIGHT, PieceType::None, true),
@@ -213,7 +213,7 @@ mod tests {
     fn knight_normal_move() {
         let mut game = Game::new_from_string("8/8/3n4/8/8/3N4/8/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(43, 28, KNIGHT, true),
@@ -236,7 +236,7 @@ mod tests {
     fn knight_take_opponent_cant_take_teamate_move() {
         let mut game = Game::new_from_string("8/8/3np3/2p1P3/2P1p3/3NP3/8/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Capture(28, 19, PAWN, KNIGHT, true),
@@ -260,7 +260,7 @@ mod tests {
     fn knight_normal_move_corners() {
         let mut game = Game::new_from_string("N7/8/8/8/8/8/8/7N".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(0, 10, KNIGHT, true),
@@ -279,7 +279,7 @@ mod tests {
     fn rook_all_move_test() {
         let mut game = Game::new_from_string("8/8/8/8/3R4/8/8/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(35, 27, ROOK, true),
@@ -308,7 +308,7 @@ mod tests {
     fn rook_stops_on_opponents() {
         let mut game = Game::new_from_string("8/8/3p4/8/p2Rp3/8/8/3p4".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(35, 27, ROOK, true),
@@ -332,7 +332,7 @@ mod tests {
     fn rook_stops_on_allies() {
         let mut game = Game::new_from_string("8/8/3P4/8/P2RP3/8/8/3P4".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(35, 27, ROOK, true),
@@ -358,7 +358,7 @@ mod tests {
     fn rook_top_left_corner() {
         let mut game = Game::new_from_string("R7/8/8/8/8/8/8/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(0, 1, ROOK, true),
@@ -388,7 +388,7 @@ mod tests {
     fn rook_top_right_corner() {
         let mut game = Game::new_from_string("7R/8/8/8/8/8/8/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(7, 1, ROOK, true),
@@ -418,7 +418,7 @@ mod tests {
     fn rook_bottom_left_corner() {
         let mut game = Game::new_from_string("8/8/8/8/8/8/8/R7".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(56, 57, ROOK, true),
@@ -448,7 +448,7 @@ mod tests {
     fn rook_bottom_right_corner() {
         let mut game = Game::new_from_string("8/8/8/8/8/8/8/7R".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(63, 57, ROOK, true),
@@ -479,7 +479,7 @@ mod tests {
     fn bishop_all_moves_test() {
         let mut game = Game::new_from_string("8/8/8/8/3B4/8/8/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
         
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(35, 26, BISHOP, true),
@@ -507,7 +507,7 @@ mod tests {
     fn bishop_stops_on_opponents() {
         let mut game = Game::new_from_string("8/p7/5p2/8/3B4/4p3/8/p7".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(35, 26, BISHOP, true),
@@ -533,7 +533,7 @@ mod tests {
     fn bishop_stops_on_allies() {
         let mut game = Game::new_from_string("8/P7/5P2/8/3B4/4P3/8/P7".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(35, 26, BISHOP, true),
@@ -563,7 +563,7 @@ mod tests {
     fn queen_all_moves_test() {
         let mut game = Game::new_from_string("8/8/8/8/3Q4/8/8/8".to_string(), true);
 
-        let mut moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(35, 26, QUEEN, true),
@@ -631,7 +631,7 @@ mod tests {
     fn check_moves_is_correct_starting_position_white() {
         let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
 
-        let moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         assert_eq!(moves.len(), 20)
     }
@@ -640,7 +640,7 @@ mod tests {
     fn check_moves_is_correct_starting_position_black() {
         let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), false);
 
-        let moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
         assert_eq!(moves.len(), 20)
     }
@@ -651,16 +651,16 @@ mod tests {
         // TODO: Add more
         let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/3P4/PPP1PPPP/RNBQKBNR".to_string(), true);
 
-        let moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
 
-        assert_eq!(moves.len(), 26)
+        assert_eq!(moves.len(), 27)
     }
 
     #[test]
     fn check_promotion_move() {
         let mut game = Game::new_from_string("8/2P5/8/8/8/8/5p1/8".to_string(), true);
 
-        let moves = game.get_all_moves();
+        let (mut moves, _, _) = game.get_all_moves();
         game.make_move(&moves[3]);
         game.undo_move();
     }
@@ -678,7 +678,6 @@ mod tests {
         let mut game = Game::new_from_string("8/8/8/8/8/8/8/R3K2R".to_string(), true);
         let m: Move = Castle(60, Right, true);
         game.make_move(&m);
-        print_board(&game);
         assert_eq!(game.board.get_white_occupancy(), 6_989_586_621_679_009_792);
     }
 
@@ -741,6 +740,51 @@ mod tests {
         assert_eq!(game.board.get_white_occupancy(), white_occupancy);
         assert_eq!(game.board.get_black_occupancy(), black_occupancy);
 
+    }
+    
+    
+    #[test]
+    fn check_pawn_take_on_sides_black() {
+        let mut game = Game::new_from_string("8/p6p/1N4N1/8/8/8/8/8".to_string(), false);
+
+        let (mut moves, _, _) = game.get_all_moves();
+
+        let mut expected_white_moves: Vec<Move> = vec![
+            Standard(8, 16, PAWN, false),
+            Standard(8, 24, PAWN, false),
+            Capture(8, 17, PAWN, PAWN, false),
+
+            Standard(15, 23, PAWN, false),
+            Standard(15, 31, PAWN, false),
+            Capture(15, 22, PAWN, PAWN, false)
+        ];
+
+        expected_white_moves.sort();
+        moves.sort();
+
+        assert_eq!(moves, expected_white_moves);
+    }
+
+    #[test]
+    fn check_pawn_take_on_sides_white() {
+        let mut game = Game::new_from_string("8/8/8/8/8/1n4n1/P6P/8".to_string(), true);
+
+        let (mut moves, _, _) = game.get_all_moves();
+
+        let mut expected_white_moves: Vec<Move> = vec![
+            Standard(48, 40, PAWN, true),
+            Standard(48, 32, PAWN, true),
+            Capture(48, 41, PAWN, PAWN, true),
+
+            Standard(55, 47, PAWN, true),
+            Standard(55, 39, PAWN, true),
+            Capture(55, 46, PAWN, PAWN, true)
+        ];
+
+        expected_white_moves.sort();
+        moves.sort();
+
+        assert_eq!(moves, expected_white_moves);
     }
 
 }
