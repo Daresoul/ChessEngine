@@ -17,7 +17,30 @@ pub mod utils {
     pub const FILE_C: u64 = 0x404040404040404_u64;
     pub const FILE_B: u64 = 0x202020202020202_u64;
     pub const FILE_A: u64 = 0x101010101010101_u64;
+    
+    pub const POSITIONS: [u64; 64] = generate_shifts();
+    pub const NEGATIVE_POSITIONS: [u64; 64] = generate_negative_shifts();
 
+
+    const fn generate_shifts() -> [u64; 64] {
+        let mut shifts = [0; 64];
+        let mut i = 0;
+        while i < 64 {
+            shifts[i] = 1 << i;
+            i += 1;
+        }
+        return shifts
+    }
+
+    const fn generate_negative_shifts() -> [u64; 64] {
+        let mut shifts = [0; 64];
+        let mut i = 0;
+        while i < 64 {
+            shifts[i] = !(1 << i);
+            i += 1;
+        }
+        return shifts
+    }
 
     pub fn pop_lsb(mask: &mut u64) -> usize {
         let bit_pos = mask.trailing_zeros();

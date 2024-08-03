@@ -1,7 +1,13 @@
 pub mod game {
+    use std::cmp::PartialEq;
+    use std::ptr::copy;
+    use PieceType::{BISHOP, KNIGHT, PAWN, QUEEN};
     use crate::board::board::{Board, BoardMove, Move};
+    use crate::board::board::Move::Castle;
+    use crate::board::board::Side::{Left, Right};
     use crate::debug::debug::print_board_from_board;
-    use crate::move_gen::move_gen::MoveGen;
+    use crate::move_gen::move_gen::{MoveGen, PieceType};
+    use crate::move_gen::move_gen::PieceType::{KING, ROOK};
     use crate::move_list::move_list::{AttackMoveList, MoveList};
 
     #[derive(Clone)]
@@ -14,6 +20,55 @@ pub mod game {
         pub move_log: Vec<Move>
     }
 
+    impl PartialEq<PieceType> for &PieceType {
+        fn eq(&self, other: &PieceType) -> bool {
+            match self {
+                PieceType::None => {
+                    match other {
+                        PieceType::None => return true,
+                        _ => return false
+                    }
+                }
+                PAWN => {
+                    match other {
+                        PAWN => return true,
+                        _ => return false
+                    }
+                }
+                ROOK => {
+                    match other {
+                        ROOK => return true,
+                        _ => return false
+                    }
+                }
+                KING => {
+                    match other {
+                        KING => return true,
+                        _ => return false
+                    }
+                }
+                KNIGHT => {
+                    match other {
+                        KNIGHT => return true,
+                        _ => return false
+                    }
+                }
+                BISHOP => {
+                    match other {
+                        BISHOP => return true,
+                        _ => return false
+                    }
+                }
+                QUEEN => {
+                    match other {
+                        QUEEN => return true,
+                        _ => return false
+                    }
+                }
+            }
+        }
+    }
+
     impl Game {
        pub fn new(is_white_turn: bool) -> Game {
             return Game {
@@ -22,7 +77,7 @@ pub mod game {
                 move_gen: MoveGen::init(),
                 white_attack_boards: Vec::with_capacity(16),
                 black_attack_boards: Vec::with_capacity(16),
-                move_log: Vec::with_capacity(2000)
+                move_log: Vec::with_capacity(2000),
             }
        }
 
@@ -34,11 +89,11 @@ pub mod game {
                 move_gen: MoveGen::init(),
                 white_attack_boards: Vec::with_capacity(16),
                 black_attack_boards: Vec::with_capacity(16),
-                move_log: Vec::with_capacity(2000)
+                move_log: Vec::with_capacity(2000),
             }
         }
 
-        pub fn get_all_moves(&mut self) -> Vec<Move> {
+        pub fn get_all_moves(&mut self) -> (Vec<Move>, u64, u64) {
 
             let mut moves = Vec::with_capacity(250);
 
@@ -55,48 +110,58 @@ pub mod game {
             self.board.get_moves(black_occupancy, white_occupancy, occupancy, false, &mut self.black_attack_boards, &self.move_gen);
 
             if self.is_white_turn {
-                self.board.attack_boards_to_moves(&self.white_attack_boards, &mut moves, true);
+                self.board.attack_boards_to_moves(&self.white_attack_boards, &mut moves, true, black_occupancy);
             } else {
-                self.board.attack_boards_to_moves(&self.black_attack_boards, &mut moves,false);
+                self.board.attack_boards_to_moves(&self.black_attack_boards, &mut moves,false, white_occupancy);
             }
 
-            return moves
+            return (moves, Self::attack_boards_to_attacked_squares(&self.white_attack_boards), Self::attack_boards_to_attacked_squares(&self.black_attack_boards))
+        }
+
+        pub fn attack_boards_to_attacked_squares(list: &Vec<BoardMove>) -> u64 {
+            let mut sum = 0;
+            for i in list.iter() {
+                sum |= i.attack_board;
+            }
+
+            return sum
         }
 
         pub fn make_move(&mut self, m: &Move) -> () {
-            let Actual_move: Move = match m {
-                Move::Standard(pos, to, piece_type, is_white) => {
-                    let x = self.board.make_move(&piece_type, &pos, &to, self.is_white_turn, false);
-                    if self.board.check_for_multiple_pieces(*pos as usize) >= 2 {
-                        print_board_from_board(&self.board);
-                        panic!("The move {:?} resultet in {:?} and crashed the program at the from position.", m, x);
-                    }
-                    if self.board.check_for_multiple_pieces(*to as usize) >= 2 {
-                        print_board_from_board(&self.board);
-                        panic!("The move {:?} resultet in {:?} and crashed the program at the to position.", m, x);
-                    }
-                    x
-                },
-                Move::Promotion(pos, to, piece_type, cp, is_white) => {
-                    let x = self.board.make_move(&piece_type, &pos, &to, self.is_white_turn, true);
-                    if self.board.check_for_multiple_pieces(*pos as usize) >= 2 {
-                        print_board_from_board(&self.board);
-                        panic!("The move {:?} resultet in {:?} and crashed the program.", m, x);
-                    }
-                    if self.board.check_for_multiple_pieces(*to as usize) >= 2 {
-                        print_board_from_board(&self.board);
-                        panic!("The move {:?} resultet in {:?} and crashed the program.", m, x);
-                    }
-                    x
-                }
-                _ => Move::None
-            };
+            //println!("{:?}", m);
 
-            if Actual_move == Move::None {
-                print!("{:?}", m)
+            let x = self.board.make_move(&m, self.is_white_turn);
+
+            let mut from = 0;
+            let mut to = 0;
+
+            match m {
+                Move::None => {}
+                Move::Standard(_from, _to, _, _) => {
+                    from = *_from;
+                    to = *_to;
+                }
+                Move::Capture(_from, _to, _, _, _) => {
+                    from = *_from;
+                    to = *_to;
+                }
+                Move::Promotion(_from, _to, _, _, _) => {
+                    from = *_from;
+                    to = *_to;
+                }
+                Castle(_from, _, c) => {
+                    from = *_from;
+                }
             }
 
-            self.move_log.push(Actual_move);
+            self.move_log.push(*m);
+
+            if self.board.check_for_multiple_pieces(from as usize) >= 2 {
+                self.panic_with_trail()
+            }
+            if self.board.check_for_multiple_pieces(to as usize) >= 2 {
+                self.panic_with_trail()
+            }
 
             self.is_white_turn = !self.is_white_turn
         }
@@ -111,6 +176,26 @@ pub mod game {
             }
 
             self.is_white_turn = !self.is_white_turn;
+        }
+
+        pub fn panic_with_trail(&self) {
+
+            println!("--------------------------------------------------------------------\n--------------------------------------------------------------------");
+
+            print_board_from_board(&self.board);
+
+            println!("move log len: {}", self.move_log.len());
+            println!("{:?}", self.move_log);
+
+
+            for (i, x) in self.move_log.iter().enumerate() {
+                println!("{}: {}", i, x.to_printable())
+            }
+
+            println!("--------------------------------------------------------------------\n--------------------------------------------------------------------");
+
+            panic!("Crashed")
+
         }
 
     }

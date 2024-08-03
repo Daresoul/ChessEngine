@@ -88,7 +88,8 @@ piece as otherwise that piece wont be in the move list.
 #[cfg(test)]
 mod tests {
     use crate::board::board::Move;
-    use crate::board::board::Move::{Promotion, Standard};
+    use crate::board::board::Move::{Capture, Castle, Promotion, Standard};
+    use crate::board::board::Side::{Left, Right};
     use crate::debug::debug::{print_bitboard_board, print_board};
     use crate::game::game::Game;
     use crate::move_gen::move_gen::Direction::{East, North, South, West};
@@ -141,12 +142,12 @@ mod tests {
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(43, 35, PAWN, true),
-            Standard(43, 34, PAWN, true),
-            Standard(43, 36, PAWN, true),
+            Capture(43, 34, PAWN, PAWN, true),
+            Capture(43, 36, PAWN, PAWN, true),
             Standard(26, 18, PAWN, true),
-            Standard(26, 19, PAWN, true),
+            Capture(26, 19, PAWN, PAWN, true),
             Standard(28, 20, PAWN, true),
-            Standard(28, 19, PAWN, true),
+            Capture(28, 19, PAWN, PAWN, true),
         ];
 
         expected_white_moves.sort();
@@ -237,10 +238,9 @@ mod tests {
 
         let mut moves = game.get_all_moves();
 
-
         let mut expected_white_moves: Vec<Move> = vec![
-            Standard(28, 19, PAWN, true),
-            Standard(43, 26, KNIGHT, true),
+            Capture(28, 19, PAWN, KNIGHT, true),
+            Capture(43, 26, KNIGHT, PAWN, true),
             Standard(43, 33, KNIGHT, true),
             Standard(43, 49, KNIGHT, true),
             Standard(43, 58, KNIGHT, true),
@@ -312,14 +312,14 @@ mod tests {
 
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(35, 27, ROOK, true),
-            Standard(35, 19, ROOK, true),
+            Capture(35, 19, ROOK, PAWN, true),
             Standard(35, 43, ROOK, true),
             Standard(35, 51, ROOK, true),
-            Standard(35, 59, ROOK, true),
+            Capture(35, 59, ROOK, PAWN, true),
             Standard(35, 34, ROOK, true),
             Standard(35, 33, ROOK, true),
-            Standard(35, 32, ROOK, true),
-            Standard(35, 36, ROOK, true),
+            Capture(35, 32, ROOK, PAWN, true),
+            Capture(35, 36, ROOK, PAWN, true),
         ];
 
         expected_white_moves.sort();
@@ -512,15 +512,15 @@ mod tests {
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(35, 26, BISHOP, true),
             Standard(35, 17, BISHOP, true),
-            Standard(35, 08, BISHOP, true),
+            Capture(35, 08, BISHOP, PAWN, true),
 
             Standard(35, 28, BISHOP, true),
-            Standard(35, 21, BISHOP, true),
+            Capture(35, 21, BISHOP, PAWN, true),
 
             Standard(35, 42, BISHOP, true),
             Standard(35, 49, BISHOP, true),
-            Standard(35, 56, BISHOP, true),
-            Standard(35, 44, BISHOP, true),
+            Capture(35, 56, BISHOP, PAWN, true),
+            Capture(35, 44, BISHOP, PAWN, true),
         ];
 
         expected_white_moves.sort();
@@ -660,46 +660,75 @@ mod tests {
     fn check_promotion_move() {
         let mut game = Game::new_from_string("8/2P5/8/8/8/8/5p1/8".to_string(), true);
 
-        print_board(&game);
         let moves = game.get_all_moves();
-        println!("{:?}", moves);
         game.make_move(&moves[3]);
-        print_board(&game);
         game.undo_move();
+    }
+
+    #[test]
+    fn castle_left_white() {
+        let mut game = Game::new_from_string("8/8/8/8/8/8/8/R3K2R".to_string(), true);
+        let m: Move = Castle(60, Left, true);
+        game.make_move(&m);
+        assert_eq!(game.board.get_white_occupancy(), 10_088_063_165_309_911_040);
+    }
+
+    #[test]
+    fn castle_right_white() {
+        let mut game = Game::new_from_string("8/8/8/8/8/8/8/R3K2R".to_string(), true);
+        let m: Move = Castle(60, Right, true);
+        game.make_move(&m);
         print_board(&game);
+        assert_eq!(game.board.get_white_occupancy(), 6_989_586_621_679_009_792);
+    }
+
+    #[test]
+    fn castle_left_black() {
+        let mut game = Game::new_from_string("r3k2r/8/8/8/8/8/8/8".to_string(), false);
+        let m: Move = Castle(4, Left, false);
+        game.make_move(&m);
+        assert_eq!(game.board.get_black_occupancy(), 140);
+    }
+
+    #[test]
+    fn castle_right_black() {
+        let mut game = Game::new_from_string("r3k2r/8/8/8/8/8/8/8".to_string(), false);
+        let m: Move = Castle(4, Right, false);
+        game.make_move(&m);
+        assert_eq!(game.board.get_black_occupancy(), 97);
     }
 
     #[test]
     fn check_make_move_single_move() {
-        // TODO: Add more
         let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
-
-        //print_board(&game);
 
         let m = Standard(51, 35, PAWN, true);
 
+        let white_occupancy = game.board.get_white_occupancy();
+        let black_occupancy = game.board.get_black_occupancy();
+
         game.make_move(&m);
 
-        //print_board(&game);
+        assert_eq!(game.board.get_white_occupancy(), 18444210833278894080);
+        assert_eq!(game.board.get_black_occupancy(), 65535);
 
         game.undo_move();
 
-        //print_board(&game);
-
-        //assert_eq!(game.board.get_black_occupancy() | game.board.get_white_occupancy(), )
+        assert_eq!(game.board.get_white_occupancy(), white_occupancy);
+        assert_eq!(game.board.get_black_occupancy(), black_occupancy);
     }
 
 
     #[test]
     fn check_make_move_double() {
-        // TODO: Add more
         let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
-
-        print_board(&game);
 
         let m = Standard(51, 35, PAWN, true);
 
         game.make_move(&m);
+
+        let white_occupancy = game.board.get_white_occupancy();
+        let black_occupancy = game.board.get_black_occupancy();
 
         let m = Standard(11, 27, PAWN, false);
 
@@ -707,53 +736,11 @@ mod tests {
 
         game.make_move(&m);
 
-        //print_board(&game);
-
         game.undo_move();
 
-        //print_board(&game);
+        assert_eq!(game.board.get_white_occupancy(), white_occupancy);
+        assert_eq!(game.board.get_black_occupancy(), black_occupancy);
 
-        //assert_eq!(game.board.get_black_occupancy() | game.board.get_white_occupancy(), )
-    }
-
-    #[test]
-    fn check2_make_move_double() {
-        // TODO: Add more
-        let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
-
-        let moves1 = game.get_all_moves();
-
-        //print_board(&game);
-
-        //println!("moves1: {}", moves1.len());
-
-        let m = Standard(51, 35, PAWN, true);
-
-        game.make_move(&moves1[0]);
-
-        let moves2 = game.get_all_moves();
-
-        //println!("moves2: {}", moves1.len());
-
-
-        let m = Standard(11, 27, PAWN, false);
-
-        game.make_move(&moves2[0]);
-
-        //print_board(&game);
-
-        game.undo_move();
-
-        //print_board(&game);
-
-        //assert_eq!(game.board.get_black_occupancy() | game.board.get_white_occupancy(), )
-    }
-
-    #[test]
-    pub fn test_ranks() {
-        let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
-        print_board(&game);
-        println!("{:?}", utils::get_file_and_rank(51));
     }
 
 }

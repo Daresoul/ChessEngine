@@ -3,7 +3,8 @@ mod rook_move_gen;
 mod bishop_move_gen;
 
 pub mod move_gen {
-    
+    use std::fmt;
+    use std::fmt::{Formatter, write};
     use PieceType::{BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK};
     
     
@@ -30,6 +31,20 @@ pub mod move_gen {
         KNIGHT = 4,
         BISHOP = 5,
         QUEEN = 6,
+    }
+
+    impl fmt::Display for PieceType {
+        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            match self {
+                PieceType::None => write!(f, "NONE"),
+                PAWN => write!(f, "P"),
+                ROOK => write!(f, "R"),
+                KING => write!(f, "K"),
+                KNIGHT => write!(f, "N"),
+                BISHOP => write!(f, "B"),
+                QUEEN => write!(f, "Q")
+            }
+        }
     }
 
     impl PartialEq for PieceType {

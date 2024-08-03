@@ -12,11 +12,15 @@ use std::env;
 
 use std::io::stdin;
 use std::time::Instant;
+use minifb::{Key, Window, WindowOptions};
 use crate::board::board::Move;
 use crate::board::board::Move::{Promotion, Standard};
 use crate::engine::engine::{Branch, Engine};
 use crate::game::game::Game;
 
+
+const WIDTH: usize = 640;
+const HEIGHT: usize = 360;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -28,19 +32,12 @@ fn main() {
     //"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
     //"8/8/7p/8/8/P7/8/8"
 
-
-//    do_game_white(depth);
-    do_game_white(2);
+    do_game_white(6);
 }
 
 pub fn print_moves(m: &Vec<Move>) {
     for i in 0..m.len() {
-        match m[i] {
-            Standard(pos, to, ptype, is_white) => println!("{}: {} -> {} as {:?}", i, pos, to, ptype),
-            Promotion(pos, to, ptype, cp, is_white) => println!("{}: {} -> {} to {:?}", i, pos, to, ptype),
-            _ => ()
-        }
-
+        println!("{}: {}", i, m[i].to_printable())
     }
 }
 
@@ -56,17 +53,16 @@ pub fn read_line() -> usize {
 
 pub fn print_branches(branches: &Vec<Branch>) -> () {
     for (i, branch) in branches.iter().enumerate() {
-        match branch.m {
-            Standard(pos, to, ptype, is_white) => println!("{}: {} -> {} as {:?} with: {}", i, pos, to, ptype, branch.val),
-            Promotion(pos, to, ptype, cp, is_white) => println!("{}: {} -> {} to {:?} with: {}", i, pos, to, ptype, branch.val),
-            _ => ()
-        }
+        println!("{}: {} with: {}", i, branch.m.to_printable(), branch.val);
     }
 }
 
 pub fn do_game_white(depth: usize) {
 
-    let mut game = Game::new_from_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".to_string(), true);
+    // "r1bqkbnr/pppp1p1p/8/4P1p1/8/2N5/PPP1PPPP/R1BQKB1R"
+    // "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+
+    let mut game = Game::new_from_string("r1bqkbnr/pppp1p1p/8/4P1p1/8/2N5/PPP1PPPP/R1BQKB1R".to_string(), true);
 
     let mut leaves = 0;
 
@@ -86,7 +82,7 @@ pub fn do_game_white(depth: usize) {
             game.make_move(&moves[index].m);
         } else {
             debug::debug::print_board(&game);
-            let moves = game.get_all_moves();
+            let (moves, _, _) = game.get_all_moves();
             println!("move_len: {}", moves.len());
             print_moves(&moves);
 
