@@ -94,9 +94,10 @@ mod tests {
     use crate::game::game::Game;
     use crate::move_gen::move_gen::Direction::{East, North, South, West};
     use crate::move_gen::move_gen::{MoveGen, PieceType};
-    use crate::move_gen::move_gen::PieceType::{BISHOP, KNIGHT, PAWN, QUEEN, ROOK};
+    use crate::move_gen::move_gen::PieceType::{BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK};
     use crate::utils::utils;
-    
+
+
     #[test]
     fn pawn_move_single_double_white() {
         let mut game = Game::new_from_string("8/3p4/8/8/8/8/3P4/8".to_string(), true);
@@ -159,7 +160,7 @@ mod tests {
 
     #[test]
     fn pawn_on_edge() {
-        let mut game = Game::new_from_string("1p4p1/P6P/8/8/8/8/p6p/8".to_string(), true);
+        let mut game = Game::new_from_string("1p4p1/P6P/8/8/8/8/8/8".to_string(), true);
 
         let (mut moves, _, _) = game.get_all_moves();
 
@@ -188,6 +189,7 @@ mod tests {
         assert_eq!(expected_white_moves, moves);
 
     }
+
 
     #[test]
     fn pawn_move_promotion() {
@@ -741,8 +743,8 @@ mod tests {
         assert_eq!(game.board.get_black_occupancy(), black_occupancy);
 
     }
-    
-    
+
+
     #[test]
     fn check_pawn_take_on_sides_black() {
         let mut game = Game::new_from_string("8/p6p/1N4N1/8/8/8/8/8".to_string(), false);
@@ -752,11 +754,11 @@ mod tests {
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(8, 16, PAWN, false),
             Standard(8, 24, PAWN, false),
-            Capture(8, 17, PAWN, PAWN, false),
+            Capture(8, 17, PAWN, KNIGHT, false),
 
             Standard(15, 23, PAWN, false),
             Standard(15, 31, PAWN, false),
-            Capture(15, 22, PAWN, PAWN, false)
+            Capture(15, 22, PAWN, KNIGHT, false)
         ];
 
         expected_white_moves.sort();
@@ -774,17 +776,44 @@ mod tests {
         let mut expected_white_moves: Vec<Move> = vec![
             Standard(48, 40, PAWN, true),
             Standard(48, 32, PAWN, true),
-            Capture(48, 41, PAWN, PAWN, true),
+            Capture(48, 41, PAWN, KNIGHT, true),
 
             Standard(55, 47, PAWN, true),
             Standard(55, 39, PAWN, true),
-            Capture(55, 46, PAWN, PAWN, true)
+            Capture(55, 46, PAWN, KNIGHT, true)
         ];
 
         expected_white_moves.sort();
         moves.sort();
 
         assert_eq!(moves, expected_white_moves);
+    }
+
+    #[test]
+    fn king_cant_move_to_attacked_square() {
+        let mut game = Game::new_from_string("7b/8/8/8/8/8/8/1K6".to_string(), true);
+
+        let (mut moves, _, _) = game.get_all_moves();
+
+        let mut expected_white_moves: Vec<Move> = vec![
+            Standard(57, 48, KING, true),
+            Standard(57, 50, KING, true),
+            Standard(57, 58, KING, true)
+        ];
+
+        expected_white_moves.sort();
+        moves.sort();
+
+        assert_eq!(moves, expected_white_moves);
+    }
+
+    #[test]
+    fn pawn_cant_move_over_piece_double() {
+        let mut game = Game::new_from_string("8/8/8/8/8/2k5/2P5/8".to_string(), true);
+
+        let (mut moves, _, _) = game.get_all_moves();
+
+        assert_eq!(moves, []);
     }
 
 }

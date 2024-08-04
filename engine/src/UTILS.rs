@@ -1,12 +1,12 @@
 pub mod utils {
-    pub const RANK_1: u64 = 0xff_u64;
-    pub const RANK_2: u64 = 0xff00_u64;
-    pub const RANK_3: u64 = 0xff0000_u64;
-    pub const RANK_4: u64 = 0xff000000_u64;
-    pub const RANK_5: u64 = 0xff00000000_u64;
-    pub const RANK_6: u64 = 0xff0000000000_u64;
-    pub const RANK_7: u64 = 0xff000000000000_u64;
-    pub const RANK_8: u64 = 0xff00000000000000_u64;
+    pub const RANK_8: u64 = 0xff_u64;
+    pub const RANK_7: u64 = 0xff00_u64;
+    pub const RANK_6: u64 = 0xff0000_u64;
+    pub const RANK_5: u64 = 0xff000000_u64;
+    pub const RANK_4: u64 = 0xff00000000_u64;
+    pub const RANK_3: u64 = 0xff0000000000_u64;
+    pub const RANK_2: u64 = 0xff000000000000_u64;
+    pub const RANK_1: u64 = 0xff00000000000000_u64;
 
 
     pub const FILE_H: u64 = 0x8080808080808080_u64;

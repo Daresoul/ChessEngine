@@ -107,7 +107,9 @@ pub mod move_gen {
         pub bishop_magics: Vec<Magic>, //[Magic; 64],
         pub bishop_table: Vec<u64>,//[u64; 5_248]
         pub white_pawn_table: Vec<u64>,
-        pub black_pawn_table: Vec<u64>
+        pub black_pawn_table: Vec<u64>,
+        pub white_pawn_attack_table: Vec<u64>,
+        pub black_pawn_attack_table: Vec<u64>
     }
 
     impl MoveGen {
@@ -123,6 +125,8 @@ pub mod move_gen {
                 bishop_table: vec![0; 5_248],
                 white_pawn_table: vec![0; 64],
                 black_pawn_table: vec![0; 64],
+                white_pawn_attack_table: vec![0; 64],
+                black_pawn_attack_table: vec![0; 64],
             };
 
             p.calculate_knight_moves();
@@ -153,14 +157,16 @@ pub mod move_gen {
                     self.king_position_board[pos] & !team_occupancy
                 }
                 PAWN => {
-                    let negated_occupancy = !occupancy;
                     let mut res = 0;
-                    res |= if is_white {self.white_pawn_table[pos] & opponent_occupancy} else {self.black_pawn_table[pos] & opponent_occupancy};
-                    let single_move = if is_white {Self::white_pawn_move(pos, 8) & negated_occupancy} else {Self::black_pawn_move(pos, 8) & negated_occupancy};
-                    res |= single_move;
-                    if single_move > 0 {
-                        res |= if is_white {Self::white_pawn_move(pos, 16) & negated_occupancy} else {Self::black_pawn_move(pos, 16) & negated_occupancy};
+
+                    if is_white {
+                        res |= self.white_pawn_table[pos] & !occupancy;
+                        res |= self.white_pawn_attack_table[pos] & opponent_occupancy;
+                    } else {
+                        res |= self.black_pawn_table[pos] & !occupancy;
+                        res |= self.black_pawn_attack_table[pos] & opponent_occupancy;
                     }
+
                     res
                 }
                 _ => panic!("Not supported piece moved: {:?}", p)

@@ -802,17 +802,6 @@ pub mod board {
                 moves_array.push(b)
             }
 
-            for _ in 0..(king_board.count_ones() as usize) {
-                let lsb = Self::pop_lsb(&mut king_board);
-                let b = BoardMove {
-                    attack_board: move_gen.get_move(KING, lsb, team_occupancy, occupancy, opponent_occupancy, is_white),
-                    piece_type: KING,
-                    position: u8::try_from(lsb).unwrap(),
-                    white: true,
-                };
-                moves_array.push(b)
-            }
-
             if moves_array.capacity() != 16 {
                 print_board_from_board(&self);
                 Self::pretty_print_board_move(&moves_array);

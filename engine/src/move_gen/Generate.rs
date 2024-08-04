@@ -4,7 +4,7 @@ use crate::debug;
 use crate::debug::debug::print_bitboard_board;
 use crate::move_gen::move_gen::Direction::{East, North, South, SouthEast, SouthWest, West};
 use crate::move_gen::move_gen::{Direction, MoveGen};
-
+use crate::utils::utils;
 
 impl MoveGen {
 
@@ -64,111 +64,103 @@ impl MoveGen {
 
     pub fn init_pawn_moves(&mut self) -> () {
         for pos in 0..64 {
-            let mut white_res: u64 = 0;
-            let mut black_res: u64 = 0;
-            let position = 1_u64 << pos;
-            let h_file: u64 = 0x0101010101010101;
-            let a_file: u64 = 0x8080808080808080;
-            let rank1: u64 = 0x00000000000000FF;
-            let rank8: u64 = 0xFF00000000000000;
+            let mut white_move: u64 = 0;
+            let mut black_move: u64 = 0;
+            let mut white_attack: u64 = 0;
+            let mut black_attack: u64 = 0;
+            let position = utils::POSITIONS[pos];
 
-            if position & a_file == 0 && position & rank1 == 0 {
-                white_res = white_res | 1_u64.overflowing_shl(pos - 7).0;
+            if utils::RANK_8 & position == 0 {
+                white_move |= utils::POSITIONS[pos - 8];
+                if utils::RANK_2 & position > 0 {
+                    white_move |= utils::POSITIONS[pos - 16];
+                }
             }
 
-            if position & h_file == 0 && position & rank1 == 0 {
-                white_res = white_res | 1_u64.overflowing_shl(pos - 9).0;
+            if utils::RANK_1 & position == 0 {
+                black_move |= utils::POSITIONS[pos + 8];
+                if utils::RANK_7 & position > 0 {
+                    black_move |= utils::POSITIONS[pos + 16];
+                }
             }
 
-            if position & h_file == 0 && position & rank8 == 0 {
-                black_res = black_res | 1_u64.overflowing_shl(pos + 7).0;
+            if utils::FILE_A & position == 0 {
+                if utils::RANK_8 & position == 0 {
+                    white_attack |= utils::POSITIONS[pos - 9];
+                }
+
+                if utils::RANK_1 & position == 0 {
+                    black_attack |= utils::POSITIONS[pos + 7]
+                }
             }
 
-            if position & a_file == 0 && position & rank8 == 0 {
-                black_res = black_res | 1_u64.overflowing_shl(pos + 9).0;
+            if utils::FILE_H & position == 0 {
+                if utils::RANK_8 & position == 0 {
+                    white_attack |= utils::POSITIONS[pos - 7];
+                }
+
+                if utils::RANK_1 & position == 0 {
+                    black_attack |= utils::POSITIONS[pos + 9]
+                }
             }
 
-            self.white_pawn_table[pos as usize] = white_res;
-            self.black_pawn_table[pos as usize] = black_res;
+            self.white_pawn_table[pos] = white_move;
+            self.black_pawn_table[pos] = black_move;
+            self.white_pawn_attack_table[pos] = white_attack;
+            self.black_pawn_attack_table[pos] = black_attack;
         }
     }
 
-    pub fn calculate_white_pawn_move(&self, position: usize, occupancy: u64, opponent_occupancy: u64) -> u64{
+    pub fn calculate_white_pawn_move(&self, pos: usize, occupancy: u64, opponent_occupancy: u64) -> u64{
         let mut result: u64 = 0;
-        let forwardPosition = 1 << position - 8;
-        let forwardLegal = forwardPosition & occupancy;
 
-        if forwardLegal == 0 {
-            result += forwardPosition;
+        if pos < 8 {
+            return result;
         }
 
-        if position / 8 == 6 {
-            let doubleForwardPosition = 1 << position - 16;
-            let doubleForwardLegal = (doubleForwardPosition + forwardPosition) & occupancy;
+        let position = 1 << pos;
 
-            if doubleForwardLegal == 0 {
-                result += doubleForwardPosition;
-            }
+        result |= 1 << pos - 8 & !occupancy;
+
+        if result > 0 && 0xff000000000000_u64 & position > 0 {
+            result |= 1 << pos - 16 & !occupancy;
         }
 
-        if position % 8 != 0 {
-            let diagonalLeftPosition = 1 << position - 9;
-            let diagonalLeftLegal = diagonalLeftPosition & opponent_occupancy;
-            if diagonalLeftLegal > 0 {
-                result += diagonalLeftPosition;
-            }
+        if 0x101010101010101_u64 & position == 0 {
+            result |= 1 << pos - 9 & opponent_occupancy;
         }
 
-        if position % 8 != 7 {
-            let diagonalRightPosition = 1 << position - 7;
-            let diagonalRightLegal = diagonalRightPosition & opponent_occupancy;
-            if diagonalRightLegal > 0 {
-                result += diagonalRightPosition;
-            }
+        if 0x8080808080808080_u64 & position == 0 {
+            result |= 1 << pos - 7 & opponent_occupancy;
         }
 
         return result
     }
 
-    pub fn calculate_black_pawn_move(&self, position: usize, occupancy: u64, opponent_occupancy: u64) -> u64{
+    pub fn calculate_black_pawn_move(&self, pos: usize, occupancy: u64, opponent_occupancy: u64) -> u64{
 
         let mut result: u64 = 0;
-        if position + 8 > 63 {
-            return 0;
-        }
-        let forwardPosition = 1 << position + 8;
-        let forwardLegal = forwardPosition & occupancy;
 
-        if forwardLegal == 0 {
-            result += forwardPosition;
+        if pos > 55 {
+            return result;
         }
 
-        if position / 8 == 1 {
-            let doubleForwardPosition = 1 << position + 16;
-            let doubleForwardLegal = (doubleForwardPosition + forwardPosition) & occupancy;
+        let position = 1 << pos;
 
-            if doubleForwardLegal == 0 {
-                result += doubleForwardPosition;
-            }
+        result |= 1 << pos + 8 & !occupancy;
+
+        if result > 0 && 0xff00_u64 & position > 0 {
+            result |= 1 << pos + 16 & !occupancy;
         }
 
-        if position % 8 != 7 {
-            if position + 9 < 64 {
-                let diagonalLeftPosition = 1 << (position + 9);
-                let diagonalLeftLegal = diagonalLeftPosition & opponent_occupancy;
-                if diagonalLeftLegal > 0 {
-                    result += diagonalLeftPosition;
-                }
-            }
+        if 0x101010101010101_u64 & position == 0 {
+            result |= 1 << pos + 7 & opponent_occupancy;
         }
 
-        if position % 8 != 0 {
-            let diagonalRightPosition = 1 << (position + 7);
-            let diagonalRightLegal = diagonalRightPosition & opponent_occupancy;
-            if diagonalRightLegal > 0 {
-                result += diagonalRightPosition;
-            }
+        if 0x8080808080808080_u64 & position == 0 {
+            result |= 1 << pos + 9 & opponent_occupancy;
         }
+
         return result
     }
 
